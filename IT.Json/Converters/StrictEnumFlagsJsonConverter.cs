@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -12,25 +13,34 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
 {
     private readonly byte[] _sep;
     private readonly int _maxLength;
+    private readonly Dictionary<TNumber, byte[]> _numberToUtf8Name;
 
     public StrictEnumFlagsJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
     {
-        typeof(TEnum).GetEnumUnderlyingType();
+        if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
+            throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));
+
         sep ??= ", "u8.ToArray();
+
+        var numberToUtf8Name = new Dictionary<TNumber, byte[]>(_valueToUtf8Name.Count);
 
         var sumNameLength = 0;
         foreach (var pair in _valueToUtf8Name)
         {
+            var key = pair.Key;
+            TNumber number = Unsafe.As<TEnum, TNumber>(ref key);
+            numberToUtf8Name.Add(number, pair.Value);
+
             sumNameLength += pair.Value.Length;
         }
+        _numberToUtf8Name = numberToUtf8Name;
         _maxLength = sumNameLength + (sep.Length * (_valueToUtf8Name.Count - 1));
         _sep = sep;
     }
 
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
     {
-        var valueToUtf8Name = _valueToUtf8Name;
-        if (valueToUtf8Name.TryGetValue(value, out var utf8Name))
+        if (_valueToUtf8Name.TryGetValue(value, out var utf8Name))
         {
             writer.WriteStringValue(utf8Name);
         }
@@ -45,10 +55,9 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
             Span<byte> utf8Value = stackalloc byte[_maxLength];
             var start = _maxLength;
 
-            foreach (var pair in valueToUtf8Name)
+            foreach (var pair in _numberToUtf8Name)
             {
-                var key = pair.Key;
-                TNumber numberKey = Unsafe.As<TEnum, TNumber>(ref key);
+                TNumber numberKey = pair.Key;
                 if (numberKey == default) continue;
 
                 if ((numberValue & numberKey) == numberKey)
