@@ -51,6 +51,8 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
         _valueToUtf8Name = valueToUtf8Name;
     }
 
+    public override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(TEnum);
+
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw new JsonException("Expected string");

@@ -12,4 +12,11 @@ public class StrictEnumFlagsJsonConverter<TEnum> : StrictEnumJsonConverter<TEnum
     {
 
     }
+
+    public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
+    {
+        if (!_valueToUtf8Name.TryGetValue(value, out var utf8Name)) throw NotMapped(value.ToString());
+
+        writer.WriteStringValue(utf8Name);
+    }
 }
