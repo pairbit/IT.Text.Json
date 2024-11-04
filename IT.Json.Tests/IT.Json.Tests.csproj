@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\IT.Json\IT.Json.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 
