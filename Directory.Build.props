@@ -1,0 +1,7 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+		<Nullable>enable</Nullable>
+		<SignAssembly>True</SignAssembly>
+		<AssemblyOriginatorKeyFile>$([System.IO.Path]::GetDirectoryName($(DirectoryBuildPropsPath)))\IT.snk</AssemblyOriginatorKeyFile>
+    </PropertyGroup>
+</Project>
