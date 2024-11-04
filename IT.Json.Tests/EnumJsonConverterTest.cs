@@ -88,6 +88,12 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\"four\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByte>("four").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\"fIrSt\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByte>("fIrSt").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\" second \"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByte>(" second ").Message));
     }
 
     [Test]
@@ -159,6 +165,12 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"five\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("five").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"fIrSt\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("fIrSt").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" second \"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>(" second ").Message));
     }
 
     private static JsonException JsonNotMapped<TEnum>(string? value) => 
