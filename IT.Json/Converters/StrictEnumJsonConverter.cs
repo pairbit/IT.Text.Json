@@ -8,14 +8,14 @@ using XXH = System.IO.Hashing.XxHash3;
 
 namespace IT.Json.Converters;
 
-public class JsonStrictEnumConverter<TEnum> : JsonConverter<TEnum>
+public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
     private readonly int _maxLength;
     private readonly Dictionary<ulong, TEnum> _xxhToValue;
     private readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
 
-    public JsonStrictEnumConverter(JsonNamingPolicy? namingPolicy)
+    public StrictEnumJsonConverter(JsonNamingPolicy? namingPolicy)
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
