@@ -27,19 +27,22 @@ public class EnumJsonConverterTest
     {
         Assert.That(JsonSerializer.Serialize(EnumByte.First), Is.EqualTo("1"));
         Assert.That(JsonSerializer.Serialize(EnumByte.Second), Is.EqualTo("2"));
+        Assert.That(JsonSerializer.Serialize((EnumByte)200), Is.EqualTo("200"));
 
         Assert.That(JsonSerializer.Deserialize<EnumByte>("1"), Is.EqualTo(EnumByte.First));
         Assert.That(JsonSerializer.Deserialize<EnumByte>("2"), Is.EqualTo(EnumByte.Second));
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("200"), Is.EqualTo((EnumByte)200));
     }
 
     [Test]
     public void StringEnum_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
 
         Assert.That(JsonSerializer.Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
         Assert.That(JsonSerializer.Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
+        Assert.That(JsonSerializer.Serialize((EnumByte)200, jso), Is.EqualTo("200"));
 
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"first\"", jso), Is.EqualTo(EnumByte.First));
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"second\"", jso), Is.EqualTo(EnumByte.Second));
@@ -49,6 +52,23 @@ public class EnumJsonConverterTest
 
         Assert.That(JsonSerializer.Deserialize<EnumByte>("1", jso), Is.EqualTo(EnumByte.First));
         Assert.That(JsonSerializer.Deserialize<EnumByte>("2", jso), Is.EqualTo(EnumByte.Second));
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("200", jso), Is.EqualTo((EnumByte)200));
+    }
+
+    [Test]
+    public void StringEnum_NoInteger_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+
+        Assert.That(JsonSerializer.Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
+        Assert.That(JsonSerializer.Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
+
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("\"first\"", jso), Is.EqualTo(EnumByte.First));
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("\"second\"", jso), Is.EqualTo(EnumByte.Second));
+
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("\"fiRsT\"", jso), Is.EqualTo(EnumByte.First));
+        Assert.That(JsonSerializer.Deserialize<EnumByte>("\"SeCoNd\"", jso), Is.EqualTo(EnumByte.Second));
     }
 
     [Test]
@@ -68,7 +88,7 @@ public class EnumJsonConverterTest
     public void StringEnum_Flags_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second, jso),
             Is.EqualTo("\"first, second\""));
@@ -85,6 +105,25 @@ public class EnumJsonConverterTest
             Is.EqualTo((EnumByteFlags)7));
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("7", jso),
+            Is.EqualTo((EnumByteFlags)7));
+    }
+
+    [Test]
+    public void StringEnum_Flags_NoInteger_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second, jso),
+            Is.EqualTo("\"first, second\""));
+
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"first, second, four\""));
+
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"first, second, four\"", jso),
+            Is.EqualTo((EnumByteFlags)7));
+
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"fIrSt, seCoNd, foUr\"", jso),
             Is.EqualTo((EnumByteFlags)7));
     }
 
