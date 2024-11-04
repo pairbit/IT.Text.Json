@@ -137,7 +137,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Flags_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new StrictEnumJsonConverter<EnumByteFlags>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new StrictEnumFlagsJsonConverter<EnumByteFlags>(JsonNamingPolicy.CamelCase));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.First, jso), Is.EqualTo("\"first\""));
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.Second, jso), Is.EqualTo("\"second\""));
@@ -153,6 +153,12 @@ public class EnumJsonConverterTest
 
         //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"first, second, four\"", jso),
         //    Is.EqualTo((EnumByteFlags)7));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByteFlags)109, jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("109").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"five\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("five").Message));
     }
 
     private static JsonException JsonNotMapped<TEnum>(string? value) => 
