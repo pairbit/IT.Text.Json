@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -19,8 +20,10 @@ public class StrictEnumJsonConverterFactory : JsonConverterFactory
     {
         if (!typeToConvert.IsEnum) throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "type not supported");
 
-        var type = typeof(StrictEnumJsonConverter<>).MakeGenericType(typeToConvert);
+        var type = typeToConvert.GetCustomAttribute<FlagsAttribute>() != null
+            ? typeof(StrictEnumFlagsJsonConverter<>)
+            : typeof(StrictEnumJsonConverter<>);
 
-        return (JsonConverter?)Activator.CreateInstance(type, _namingPolicy);
+        return (JsonConverter?)Activator.CreateInstance(type.MakeGenericType(typeToConvert), _namingPolicy);
     }
 }
