@@ -11,9 +11,9 @@ namespace IT.Json.Converters;
 public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
-    private readonly int _maxLength;
-    private readonly Dictionary<ulong, TEnum> _xxhToValue;
-    private readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
+    protected readonly int _maxLength;
+    protected readonly Dictionary<ulong, TEnum> _xxhToValue;
+    protected readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
 
     public StrictEnumJsonConverter(JsonNamingPolicy? namingPolicy)
     {
@@ -107,5 +107,5 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
         writer.WriteStringValue(utf8Name);
     }
 
-    private static JsonException NotMapped(string? value) => new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
+    protected static JsonException NotMapped(string? value) => new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }
