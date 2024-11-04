@@ -21,9 +21,9 @@ public class StrictEnumJsonConverterFactory : JsonConverterFactory
         if (!typeToConvert.IsEnum) throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "type not supported");
 
         var type = typeToConvert.GetCustomAttribute<FlagsAttribute>() != null
-            ? typeof(StrictEnumFlagsJsonConverter<>)
-            : typeof(StrictEnumJsonConverter<>);
+            ? typeof(StrictEnumFlagsJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType())
+            : typeof(StrictEnumJsonConverter<>).MakeGenericType(typeToConvert);
 
-        return (JsonConverter?)Activator.CreateInstance(type.MakeGenericType(typeToConvert), _namingPolicy);
+        return (JsonConverter?)Activator.CreateInstance(type, _namingPolicy);
     }
 }

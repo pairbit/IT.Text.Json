@@ -11,7 +11,7 @@ namespace IT.Json.Converters;
 public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
-    protected readonly int _maxLength;
+    protected readonly int _maxNameLength;
     protected readonly Dictionary<ulong, TEnum> _xxhToValue;
     protected readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
 
@@ -22,10 +22,11 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var utf8 = Encoding.UTF8;
         var xxhToValue = new Dictionary<ulong, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
-        var maxLength = 0;
+        var maxNameLength = 0;
 
-        foreach (var value in values)
+        for (int i = values.Length - 1; i >= 0; i--)
         {
+            var value = values[i];
             var name = value.ToString();
             var member = type.GetMember(name)[0];
 
@@ -36,7 +37,7 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
                 name = namingPolicy.ConvertName(name);
 
             var utf8Name = utf8.GetBytes(name);
-            if (utf8Name.Length > maxLength) maxLength = utf8Name.Length;
+            if (utf8Name.Length > maxNameLength) maxNameLength = utf8Name.Length;
 
             var xxh = XXH.HashToUInt64(utf8Name);
 
@@ -46,7 +47,7 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
             valueToUtf8Name.Add(value, utf8Name);
         }
 
-        _maxLength = maxLength;
+        _maxNameLength = maxNameLength;
         _xxhToValue = xxhToValue;
         _valueToUtf8Name = valueToUtf8Name;
     }
@@ -66,7 +67,7 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
             {
                 var span = sequence.First.Span;
 
-                if (span.Length > _maxLength) throw NotMapped(reader.GetString());
+                if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
                 xxh = XXH.HashToUInt64(span);
             }
@@ -79,7 +80,7 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
                 {
                     length += memory.Length;
 
-                    if (length > _maxLength) throw NotMapped(reader.GetString());
+                    if (length > _maxNameLength) throw NotMapped(reader.GetString());
 
                     xxhAlg.Append(memory.Span);
 
@@ -92,7 +93,7 @@ public class StrictEnumJsonConverter<TEnum> : JsonConverter<TEnum>
         {
             var span = reader.ValueSpan;
 
-            if (span.Length > _maxLength) throw NotMapped(reader.GetString());
+            if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
             xxh = XXH.HashToUInt64(span);
         }
