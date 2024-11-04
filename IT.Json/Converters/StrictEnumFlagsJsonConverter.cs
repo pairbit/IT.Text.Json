@@ -9,10 +9,11 @@ namespace IT.Json.Converters;
 
 public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum
-    where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IEqualityOperators<TNumber, TNumber, bool>
+    where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
 {
     private readonly byte[] _sep;
     private readonly int _maxLength;
+    //private readonly TNumber _sumNumber;
     private readonly Dictionary<TNumber, byte[]> _numberToUtf8Name;
 
     public StrictEnumFlagsJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
@@ -25,11 +26,15 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
         var numberToUtf8Name = new Dictionary<TNumber, byte[]>(_valueToUtf8Name.Count);
 
         var sumNameLength = 0;
+        //TNumber sumNumber = default;
+        
         foreach (var pair in _valueToUtf8Name)
         {
             var key = pair.Key;
             TNumber number = Unsafe.As<TEnum, TNumber>(ref key);
             numberToUtf8Name.Add(number, pair.Value);
+
+            //if (number > maxNumber) maxNumber = number;
 
             sumNameLength += pair.Value.Length;
         }

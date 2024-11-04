@@ -16,10 +16,11 @@ enum EnumByte : byte
 enum EnumByteFlags : byte
 {
     None = 0,
-    First = 1,
-    Second = 2,
-    FirstSecond = 3,
+    One = 1,
+    Two = 2,
+    Three = 3,
     Four = 4,
+    Five = 5,
     //Eight = 8
 }
 
@@ -115,33 +116,30 @@ public class EnumJsonConverterTest
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.None, jso),
             Is.EqualTo("\"none\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second, jso),
-            Is.EqualTo("\"firstSecond\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
+            Is.EqualTo("\"three\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Second | EnumByteFlags.First, jso),
-            Is.EqualTo("\"firstSecond\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"two, five\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"firstSecond, four\""));
-
-        //Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second | (EnumByteFlags)8, jso),
+        //Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | (EnumByteFlags)8, jso),
         //    Is.EqualTo("\"first, second, eight\""));
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("4", jso), Is.EqualTo(EnumByteFlags.Four));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  firstSecond ,    four    \"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  two ,    five    \"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  first   , second ,    four    \"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  one   , two ,    four    \"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"fIrSt, seCoNd, foUr\"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"three, foUr\"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"fIrStSeCoNd, foUr\"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"tHrEe, foUr\"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  fIrSt, seCoNd, fIrStSeCoNd, foUr\"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  oNe, tWO, ThRee, foUr\"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("  7  ", jso),
@@ -154,16 +152,16 @@ public class EnumJsonConverterTest
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second, jso),
-            Is.EqualTo("\"firstSecond\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
+            Is.EqualTo("\"three\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"firstSecond, four\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"two, five\""));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  first   ,    second, four\"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  one   ,    two, four\"", jso),
             Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"fIrSt, seCoNd, foUr\"", jso),
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"OnE, tWO, foUr\"", jso),
             Is.EqualTo((EnumByteFlags)7));
     }
 
@@ -173,35 +171,35 @@ public class EnumJsonConverterTest
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new StrictEnumFlagsJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First, jso), Is.EqualTo("\"first\""));
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Second, jso), Is.EqualTo("\"second\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"first\"", jso), Is.EqualTo(EnumByteFlags.First));
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"second\"", jso), Is.EqualTo(EnumByteFlags.Second));
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one\"", jso), Is.EqualTo(EnumByteFlags.One));
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"two\"", jso), Is.EqualTo(EnumByteFlags.Two));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second, jso),
-            Is.EqualTo("\"firstSecond\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
+            Is.EqualTo("\"three\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Four | EnumByteFlags.First, jso),
-            Is.EqualTo("\"first, four\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Four | EnumByteFlags.One, jso),
+            Is.EqualTo("\"five\""));
 
-        Assert.That(JsonSerializer.Serialize(EnumByteFlags.First | EnumByteFlags.Second | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"firstSecond, four\""));
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"two, five\""));
 
-        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"first, second, four\"", jso),
+        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, four\"", jso),
         //    Is.EqualTo((EnumByteFlags)7));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByteFlags)109, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("109").Message));
 
-        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"five\"", jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumByteFlags>("five").Message));
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"six\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("six").Message));
 
-        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"fIrSt\"", jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumByteFlags>("fIrSt").Message));
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"OnE\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("OnE").Message));
 
-        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" second \"", jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumByteFlags>(" second ").Message));
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" two \"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>(" two ").Message));
     }
 
     private static JsonException JsonNotMapped<TEnum>(string? value) => 
