@@ -14,14 +14,15 @@ public class StrictEnumFlagsJsonConverter<TEnum> : JsonConverter<TEnum>
     private readonly int _maxLength;
     private readonly Dictionary<ulong, TEnum> _xxhToValue;
     private readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
+    private readonly byte[] _sep = ", "u8.ToArray();
 
     public StrictEnumFlagsJsonConverter(JsonNamingPolicy? namingPolicy)
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
         var utf8 = Encoding.UTF8;
-        var xxhToValue = new Dictionary<ulong, TEnum>();
-        var valueToUtf8Name = new Dictionary<TEnum, byte[]>();
+        var xxhToValue = new Dictionary<ulong, TEnum>(values.Length);
+        var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
         var maxLength = 0;
 
         foreach (var value in values)
