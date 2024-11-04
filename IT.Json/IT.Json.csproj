@@ -7,14 +7,14 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company />
-    <Description>Encoding data in base64 up to 128 bits</Description>
+    <Description>JsonConverters</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/pairbit/IT.Base64</RepositoryUrl>
+    <RepositoryUrl>https://github.com/pairbit/IT.Json</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <Authors>Ivan Tikhonov</Authors>
     <Copyright>Ivan Tikhonov © 2024</Copyright>
     <Version>2.0.0-pre1</Version>
-    <PackageTags>Encoding Base64 Base64Url</PackageTags>
+    <PackageTags>Json JsonConverter</PackageTags>
 	<PackageReadmeFile>Readme.md</PackageReadmeFile>
 	<PackageIcon>Icon.png</PackageIcon>
     <PackageReleaseNotes></PackageReleaseNotes>

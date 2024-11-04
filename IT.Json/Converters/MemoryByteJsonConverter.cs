@@ -3,11 +3,10 @@ using System.Buffers.Text;
 using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.Unicode;
 
 namespace IT.Json.Converters;
 
-public class MemoryByteJsonConverter : JsonConverter<Memory<byte>>
+internal class MemoryByteJsonConverter : JsonConverter<Memory<byte>>
 {
     public override bool HandleNull => true;
 
