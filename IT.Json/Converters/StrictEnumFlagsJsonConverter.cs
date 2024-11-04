@@ -101,7 +101,11 @@ public class StrictEnumFlagsJsonConverter<TEnum> : JsonConverter<TEnum>
     }
 
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
-        => writer.WriteStringValue(_valueToUtf8Name[value]);
+    {
+        if (!_valueToUtf8Name.TryGetValue(value, out var utf8Name)) throw NotMapped(value.ToString());
+
+        writer.WriteStringValue(utf8Name);
+    }
 
     private static JsonException NotMapped(string? value) => new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }

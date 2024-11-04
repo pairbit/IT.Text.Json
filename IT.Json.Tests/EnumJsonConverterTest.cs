@@ -82,6 +82,12 @@ public class EnumJsonConverterTest
 
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"first\"", jso), Is.EqualTo(EnumByte.First));
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"second\"", jso), Is.EqualTo(EnumByte.Second));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByte)109, jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByte>("109").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\"four\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByte>("four").Message));
     }
 
     [Test]
@@ -148,4 +154,7 @@ public class EnumJsonConverterTest
         //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"first, second, four\"", jso),
         //    Is.EqualTo((EnumByteFlags)7));
     }
+
+    private static JsonException JsonNotMapped<TEnum>(string? value) => 
+        new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }
