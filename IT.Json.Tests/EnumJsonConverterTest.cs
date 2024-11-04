@@ -31,6 +31,11 @@ public class EnumJsonConverterTest
     {
         var eb = EnumByte.Second;
         Assert.That(Unsafe.As<EnumByte, byte>(ref eb), Is.EqualTo(2));
+
+        Assert.That(EnumByteFlags.None | 
+            EnumByteFlags.One | EnumByteFlags.Two | 
+            EnumByteFlags.Three | EnumByteFlags.Four | 
+            EnumByteFlags.Five, Is.EqualTo((EnumByteFlags)7));
     }
 
     [Test]
