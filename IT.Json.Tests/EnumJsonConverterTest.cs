@@ -281,10 +281,10 @@ public class EnumJsonConverterTest
     }
 
     private static ArgumentException ArgEnumMoreOne<TEnum>() =>
-        new($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
+        new($"Enum '{typeof(TEnum).FullName}' must contain more than one value");
 
     private static ArgumentException ArgEnumEmpty<TEnum>() =>
-        new($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
+        new($"Enum '{typeof(TEnum).FullName}' cannot be empty");
 
     private static JsonException JsonNotMapped<TEnum>(string? value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");

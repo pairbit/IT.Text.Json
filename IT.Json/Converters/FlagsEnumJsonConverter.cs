@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -23,10 +24,10 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         : base(namingPolicy, seed)
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
-            throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));
+            throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'");
 
         var values = Enum.GetValues<TEnum>();
-        if (values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
+        if (values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value");
 
         sep ??= ", "u8.ToArray();
 
@@ -72,6 +73,10 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             {
                 utf8Value = stackalloc byte[length];
                 status = TryWrite(ref utf8Value, ref numberValue);
+
+#if DEBUG
+                Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> stackalloc");
+#endif
             }
             else
             {
@@ -85,6 +90,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 finally
                 {
                     pool.Return(rented);
+#if DEBUG
+                    Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> pool Return");
+#endif
                 }
             }
 

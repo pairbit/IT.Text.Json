@@ -21,7 +21,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
-        if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
+        if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty");
 
         var utf8 = Encoding.UTF8;
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
