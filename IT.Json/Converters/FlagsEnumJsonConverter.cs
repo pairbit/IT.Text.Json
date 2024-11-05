@@ -11,6 +11,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum
     where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
 {
+
+    private const int MaxStackallocBytes = 256;
+
     private readonly byte[] _sep;
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
@@ -58,44 +61,69 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         {
             TNumber numberValue = Unsafe.As<TEnum, TNumber>(ref value);
 
-            if (numberValue > _maxNumber) goto NotMapped;
+            if (numberValue > _maxNumber) throw NotMapped(value.ToString());
 
-            var sep = _sep;
+            bool status;
+            scoped Span<byte> utf8Value;
             var length = _maxLength;
-            //TODO: PoolRent
-            Span<byte> utf8Value = stackalloc byte[length];
-            var start = length;
 
-            var numberUtf8Name = _numberUtf8Name;
-            for (var i = numberUtf8Name.Length - 1; i >= 0; i--)
+            if (length <= MaxStackallocBytes)
             {
-                (TNumber number, utf8Name) = numberUtf8Name[i];
-                if (number == default) continue;
-
-                if ((numberValue & number) == number)
+                utf8Value = stackalloc byte[length];
+                status = TryWrite(ref utf8Value, ref numberValue);
+            }
+            else
+            {
+                var pool = ArrayPool<byte>.Shared;
+                var rented = pool.Rent(length);
+                utf8Value = rented.AsSpan(0, length);
+                try
                 {
-                    if (start != length)
-                    {
-                        start -= sep.Length;
-                        sep.CopyTo(utf8Value.Slice(start));
-                    }
-
-                    start -= utf8Name.Length;
-                    utf8Name.CopyTo(utf8Value.Slice(start));
-
-                    numberValue &= ~number;
-                    if (numberValue == default) goto Done;
+                    status = TryWrite(ref utf8Value, ref numberValue);
+                }
+                finally
+                {
+                    pool.Return(rented);
                 }
             }
 
-            if (numberValue != default) goto NotMapped;
+            if (!status && numberValue != default) throw NotMapped(value.ToString());
 
-            Done:
-            writer.WriteStringValue(utf8Value.Slice(start));
-            return;
-
-        NotMapped:
-            throw NotMapped(value.ToString());
+            writer.WriteStringValue(utf8Value);
         }
+    }
+
+    private bool TryWrite(ref Span<byte> utf8Value, ref TNumber numberValue)
+    {
+        var length = utf8Value.Length;
+        var start = length;
+        var sep = _sep;
+        var numberUtf8Name = _numberUtf8Name;
+        for (var i = numberUtf8Name.Length - 1; i >= 0; i--)
+        {
+            (var number, var utf8Name) = numberUtf8Name[i];
+            if (number == default) continue;
+
+            if ((numberValue & number) == number)
+            {
+                if (start != length)
+                {
+                    start -= sep.Length;
+                    sep.CopyTo(utf8Value.Slice(start));
+                }
+
+                start -= utf8Name.Length;
+                utf8Name.CopyTo(utf8Value.Slice(start));
+
+                numberValue &= ~number;
+                if (numberValue == default)
+                {
+                    utf8Value = utf8Value.Slice(start);
+                    return true;
+                }
+            }
+        }
+        utf8Value = utf8Value.Slice(start);
+        return false;
     }
 }

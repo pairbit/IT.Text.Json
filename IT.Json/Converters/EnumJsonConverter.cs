@@ -28,7 +28,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
         var maxNameLength = 0;
-        
+
         foreach (var value in values)
         {
             var name = value.ToString();
