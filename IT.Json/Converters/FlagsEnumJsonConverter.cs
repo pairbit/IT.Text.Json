@@ -14,33 +14,36 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly byte[] _sep;
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
-    private readonly Dictionary<TNumber, byte[]> _numberToUtf8Name;
+    private readonly (TNumber, byte[])[] _numberUtf8Name;
 
     public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
             throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));
 
-        sep ??= ", "u8.ToArray();
+        var values = Enum.GetValues<TEnum>();
+        if (values.Length <= 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
 
-        var numberToUtf8Name = new Dictionary<TNumber, byte[]>(_valueToUtf8Name.Count);
+        sep ??= ", "u8.ToArray();
 
         var sumNameLength = 0;
         TNumber maxNumber = default;
 
-        foreach (var pair in _valueToUtf8Name)
+        var numberUtf8Name = new (TNumber, byte[])[values.Length];
+        for (int i = 0; i < values.Length; i++)
         {
-            var key = pair.Key;
+            var key = values[i];
             TNumber number = Unsafe.As<TEnum, TNumber>(ref key);
-            numberToUtf8Name.Add(number, pair.Value);
-
             maxNumber |= number;
 
-            sumNameLength += pair.Value.Length;
+            var utf8Name = _valueToUtf8Name[key];
+            sumNameLength += utf8Name.Length;
+
+            numberUtf8Name[i] = (number, utf8Name);
         }
         _maxNumber = maxNumber;
-        _numberToUtf8Name = numberToUtf8Name;
-        _maxLength = sumNameLength + (sep.Length * (_valueToUtf8Name.Count - 1));
+        _numberUtf8Name = numberUtf8Name;
+        _maxLength = sumNameLength + (sep.Length * (values.Length - 1));
         _sep = sep;
     }
 
@@ -62,12 +65,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             Span<byte> utf8Value = stackalloc byte[length];
             var start = length;
 
-            foreach (var pair in _numberToUtf8Name)
+            var numberUtf8Name = _numberUtf8Name;
+            for (var i = numberUtf8Name.Length - 1; i >= 0; i--)
             {
-                TNumber numberKey = pair.Key;
-                if (numberKey == default) continue;
+                (TNumber number, utf8Name) = numberUtf8Name[i];
+                if (number == default) continue;
 
-                if ((numberValue & numberKey) == numberKey)
+                if ((numberValue & number) == number)
                 {
                     if (start != length)
                     {
@@ -75,11 +79,10 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                         sep.CopyTo(utf8Value.Slice(start));
                     }
 
-                    utf8Name = pair.Value;
                     start -= utf8Name.Length;
                     utf8Name.CopyTo(utf8Value.Slice(start));
 
-                    numberValue &= ~numberKey;
+                    numberValue &= ~number;
                     if (numberValue == default) goto Done;
                 }
             }

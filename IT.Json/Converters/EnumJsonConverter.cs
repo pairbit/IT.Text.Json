@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using XXH = System.IO.Hashing.XxHash3;
+using XXH = System.IO.Hashing.XxHash32;
 
 namespace IT.Json.Converters;
 
@@ -12,21 +14,20 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
     protected readonly int _maxNameLength;
-    protected readonly Dictionary<ulong, TEnum> _xxhToValue;
-    protected readonly Dictionary<TEnum, byte[]> _valueToUtf8Name;
+    protected readonly FrozenDictionary<int, TEnum> _xxhToValue;
+    protected readonly FrozenDictionary<TEnum, byte[]> _valueToUtf8Name;
 
     public EnumJsonConverter(JsonNamingPolicy? namingPolicy)
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
         var utf8 = Encoding.UTF8;
-        var xxhToValue = new Dictionary<ulong, TEnum>(values.Length);
+        var xxhToValue = new Dictionary<int, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
         var maxNameLength = 0;
-
-        for (int i = values.Length - 1; i >= 0; i--)
+        
+        foreach (var value in values)
         {
-            var value = values[i];
             var name = value.ToString();
             var member = type.GetMember(name)[0];
 
@@ -39,8 +40,9 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             var utf8Name = utf8.GetBytes(name);
             if (utf8Name.Length > maxNameLength) maxNameLength = utf8Name.Length;
 
-            var xxh = XXH.HashToUInt64(utf8Name);
+            var xxh = (int)XXH.HashToUInt32(utf8Name);
 
+            //TODO: set seed
             if (!xxhToValue.TryAdd(xxh, value))
                 throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'");
 
@@ -48,8 +50,23 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         }
 
         _maxNameLength = maxNameLength;
-        _xxhToValue = xxhToValue;
-        _valueToUtf8Name = valueToUtf8Name;
+        _xxhToValue = xxhToValue.ToFrozenDictionary();
+        _valueToUtf8Name = valueToUtf8Name.ToFrozenDictionary();
+
+#if DEBUG
+        var xxhToValueType = _xxhToValue.GetType().FullName;
+        var valueToUtf8NameType = _valueToUtf8Name.GetType().FullName;
+        if (values.Length <= 10)
+        {
+            Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
+            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
+        }
+        else
+        {
+            Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
+            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
+        }
+#endif
     }
 
     public override bool CanConvert(Type typeToConvert) => typeToConvert == typeof(TEnum);
@@ -58,7 +75,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     {
         if (reader.TokenType != JsonTokenType.String) throw new JsonException("Expected string");
 
-        ulong xxh;
+        int xxh;
 
         if (reader.HasValueSequence)
         {
@@ -69,10 +86,11 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
                 if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
-                xxh = XXH.HashToUInt64(span);
+                xxh = (int)XXH.HashToUInt32(span);
             }
             else
             {
+                //TODO: static cache?
                 var xxhAlg = new XXH();
                 var position = sequence.Start;
                 var length = 0;
@@ -86,7 +104,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
                     if (position.GetObject() == null) break;
                 }
-                xxh = xxhAlg.GetCurrentHashAsUInt64();
+                xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
             }
         }
         else
@@ -95,7 +113,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
             if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
-            xxh = XXH.HashToUInt64(span);
+            xxh = (int)XXH.HashToUInt32(span);
         }
 
         if (_xxhToValue.TryGetValue(xxh, out var value)) return value;
