@@ -12,17 +12,25 @@ namespace IT.Json.Converters;
 public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
+    protected static readonly TEnum[] _values;
     protected readonly int _seed;
     protected readonly int _maxNameLength;
     protected readonly FrozenDictionary<int, TEnum> _xxhToValue;
     protected readonly FrozenDictionary<TEnum, byte[]> _valueToUtf8Name;
 
+    static EnumJsonConverter()
+    {
+        var values = Enum.GetValues<TEnum>();
+
+        if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
+
+        _values = values;
+    }
+
     public EnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0)
     {
         var type = typeof(TEnum);
-        var values = Enum.GetValues<TEnum>();
-        if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty");
-
+        var values = _values;
         var utf8 = Encoding.UTF8;
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);

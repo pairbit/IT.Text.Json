@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-	<NoWarn>$(NoWarn);IDE1006;IDE0049;IDE0290</NoWarn>
+	<NoWarn>$(NoWarn);IDE1006;IDE0049;IDE0290;NUnit2045</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -143,7 +143,7 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\" second \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByte>(" second ").Message));
 
-        Assert.That(Assert.Catch<ArgumentException>(() => new EnumJsonConverter<EnumEmpty>(JsonNamingPolicy.CamelCase)).Message,
+        Assert.That(Assert.Catch<TypeInitializationException>(() => new EnumJsonConverter<EnumEmpty>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
             Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
     }
 
@@ -257,10 +257,10 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" two \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>(" two ").Message));
 
-        Assert.That(Assert.Catch<ArgumentException>(() => new FlagsEnumJsonConverter<EnumEmpty, int>(JsonNamingPolicy.CamelCase)).Message,
+        Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumEmpty, int>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
             Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
 
-        Assert.That(Assert.Catch<ArgumentException>(() => new FlagsEnumJsonConverter<EnumOne, int>(JsonNamingPolicy.CamelCase)).Message,
+        Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumOne, int>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
             Is.EqualTo(ArgEnumMoreOne<EnumOne>().Message));
     }
 
@@ -281,10 +281,10 @@ public class EnumJsonConverterTest
     }
 
     private static ArgumentException ArgEnumMoreOne<TEnum>() =>
-        new($"Enum '{typeof(TEnum).FullName}' must contain more than one value");
+        new($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
 
     private static ArgumentException ArgEnumEmpty<TEnum>() =>
-        new($"Enum '{typeof(TEnum).FullName}' cannot be empty");
+        new($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
 
     private static JsonException JsonNotMapped<TEnum>(string? value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");

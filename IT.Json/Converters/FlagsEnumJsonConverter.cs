@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -12,7 +11,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum
     where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
 {
-
     private const int MaxStackallocBytes = 256;
 
     private readonly byte[] _sep;
@@ -20,21 +18,23 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly TNumber _maxNumber;
     private readonly (TNumber, byte[])[] _numberUtf8Name;
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
-        : base(namingPolicy, seed)
+    static FlagsEnumJsonConverter()
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
-            throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'");
+            throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));
 
-        var values = Enum.GetValues<TEnum>();
-        if (values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value");
+        if (_values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
+    }
 
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
+            : base(namingPolicy, seed)
+    {
         sep ??= ", "u8.ToArray();
 
         //TODO: возможно определить более эффективный размер??
         var sumNameLength = 0;
         TNumber maxNumber = default;
-
+        var values = _values;
         var numberUtf8Name = new (TNumber, byte[])[values.Length];
         for (int i = 0; i < values.Length; i++)
         {
@@ -75,7 +75,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 status = TryWrite(ref utf8Value, ref numberValue);
 
 #if DEBUG
-                Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> stackalloc");
+                System.Diagnostics.Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> stackalloc");
 #endif
             }
             else
@@ -91,7 +91,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 {
                     pool.Return(rented);
 #if DEBUG
-                    Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> pool Return");
+                    System.Diagnostics.Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> pool Return");
 #endif
                 }
             }
