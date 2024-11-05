@@ -66,14 +66,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         else
         {
             Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
-            if (type == typeof(int))
-            {
-                Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
-            }
-            else
-            {
-                Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
-            }
+            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
         }
 #endif
     }

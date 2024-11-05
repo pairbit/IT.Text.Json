@@ -32,6 +32,11 @@ enum EnumByteFlags : byte
     //Eight = 8
 }
 
+enum EnumIntFlags
+{
+    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
+}
+
 enum EnumEmpty { }
 
 enum EnumOne
@@ -196,6 +201,7 @@ public class EnumJsonConverterTest
     {
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new FlagsEnumJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new FlagsEnumJsonConverter<EnumIntFlags, int>(JsonNamingPolicy.CamelCase));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));
