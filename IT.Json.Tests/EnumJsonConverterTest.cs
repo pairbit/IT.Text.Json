@@ -32,6 +32,13 @@ enum EnumByteFlags : byte
     //Eight = 8
 }
 
+enum EnumEmpty { }
+
+enum EnumOne
+{
+    None = 0
+}
+
 public class EnumJsonConverterTest
 {
     [Test]
@@ -40,9 +47,9 @@ public class EnumJsonConverterTest
         var eb = EnumByte.Second;
         Assert.That(Unsafe.As<EnumByte, byte>(ref eb), Is.EqualTo(2));
 
-        Assert.That(EnumByteFlags.None | 
-            EnumByteFlags.One | EnumByteFlags.Two | 
-            EnumByteFlags.Three | EnumByteFlags.Four | 
+        Assert.That(EnumByteFlags.None |
+            EnumByteFlags.One | EnumByteFlags.Two |
+            EnumByteFlags.Three | EnumByteFlags.Four |
             EnumByteFlags.Five, Is.EqualTo((EnumByteFlags)7));
     }
 
@@ -100,12 +107,15 @@ public class EnumJsonConverterTest
     {
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new EnumJsonConverter<EnumByte>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new EnumJsonConverter<EnumOne>(JsonNamingPolicy.CamelCase));
 
         Assert.That(JsonSerializer.Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
         Assert.That(JsonSerializer.Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
+        Assert.That(JsonSerializer.Serialize(EnumOne.None, jso), Is.EqualTo("\"none\""));
 
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"first\"", jso), Is.EqualTo(EnumByte.First));
         Assert.That(JsonSerializer.Deserialize<EnumByte>("\"second\"", jso), Is.EqualTo(EnumByte.Second));
+        Assert.That(JsonSerializer.Deserialize<EnumOne>("\"none\"", jso), Is.EqualTo(EnumOne.None));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByte)109, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByte>("109").Message));
@@ -118,6 +128,9 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByte>("\" second \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByte>(" second ").Message));
+
+        Assert.That(Assert.Catch<ArgumentException>(() => new EnumJsonConverter<EnumEmpty>(JsonNamingPolicy.CamelCase)).Message,
+            Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
     }
 
     [Test]
@@ -216,8 +229,20 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" two \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>(" two ").Message));
+
+        Assert.That(Assert.Catch<ArgumentException>(() => new FlagsEnumJsonConverter<EnumEmpty, int>(JsonNamingPolicy.CamelCase)).Message,
+            Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
+
+        Assert.That(Assert.Catch<ArgumentException>(() => new FlagsEnumJsonConverter<EnumOne, int>(JsonNamingPolicy.CamelCase)).Message,
+            Is.EqualTo(ArgEnumMoreOne<EnumOne>().Message));
     }
 
-    private static JsonException JsonNotMapped<TEnum>(string? value) => 
+    private static ArgumentException ArgEnumMoreOne<TEnum>() =>
+        new($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
+
+    private static ArgumentException ArgEnumEmpty<TEnum>() =>
+        new($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
+
+    private static JsonException JsonNotMapped<TEnum>(string? value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }

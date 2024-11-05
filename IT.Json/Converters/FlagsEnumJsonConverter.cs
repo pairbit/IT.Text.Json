@@ -16,14 +16,14 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly TNumber _maxNumber;
     private readonly (TNumber, byte[])[] _numberUtf8Name;
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null) 
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
         : base(namingPolicy, seed)
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
             throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));
 
         var values = Enum.GetValues<TEnum>();
-        if (values.Length <= 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
+        if (values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
 
         sep ??= ", "u8.ToArray();
 

@@ -22,6 +22,8 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
+        if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
+
         var utf8 = Encoding.UTF8;
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
@@ -64,7 +66,14 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         else
         {
             Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
-            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
+            if (type == typeof(int))
+            {
+                Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
+            }
+            else
+            {
+                Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
+            }
         }
 #endif
     }
