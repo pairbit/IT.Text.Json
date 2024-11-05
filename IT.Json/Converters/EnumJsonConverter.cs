@@ -137,6 +137,6 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         writer.WriteStringValue(utf8Name);
     }
 
-    protected static JsonException NotMapped<T>(T value) => 
+    protected static JsonException NotMapped<T>(T value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }

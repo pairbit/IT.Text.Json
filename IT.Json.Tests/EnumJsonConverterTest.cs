@@ -257,6 +257,9 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" two \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>(" two ").Message));
 
+        Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumOne, uint>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
+            Is.EqualTo(ArgEnumNotBase<EnumOne>().Message));
+
         Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumEmpty, int>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
             Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
 
@@ -279,6 +282,9 @@ public class EnumJsonConverterTest
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
             Is.EqualTo("\"two|five\""));
     }
+
+    private static ArgumentException ArgEnumNotBase<TEnum>() =>
+        new($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", "TNumber");
 
     private static ArgumentException ArgEnumMoreOne<TEnum>() =>
         new($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
