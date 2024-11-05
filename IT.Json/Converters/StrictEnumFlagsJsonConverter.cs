@@ -27,7 +27,7 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
 
         var sumNameLength = 0;
         //TNumber sumNumber = default;
-        
+
         foreach (var pair in _valueToUtf8Name)
         {
             var key = pair.Key;
@@ -53,12 +53,11 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
         {
             TNumber numberValue = Unsafe.As<TEnum, TNumber>(ref value);
 
-            var first = true;
             var sep = _sep;
-
+            var length = _maxLength;
             //TODO: PoolRent
-            Span<byte> utf8Value = stackalloc byte[_maxLength];
-            var start = _maxLength;
+            Span<byte> utf8Value = stackalloc byte[length];
+            var start = length;
 
             foreach (var pair in _numberToUtf8Name)
             {
@@ -67,8 +66,7 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
 
                 if ((numberValue & numberKey) == numberKey)
                 {
-                    if (first) first = false;
-                    else
+                    if (start != length)
                     {
                         start -= sep.Length;
                         sep.CopyTo(utf8Value.Slice(start));
@@ -85,7 +83,7 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
 
             if (numberValue != default) goto NotMapped;
 
-        Done:
+            Done:
             writer.WriteStringValue(utf8Value.Slice(start));
             return;
 
