@@ -194,6 +194,9 @@ public class EnumJsonConverterTest
         //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, four\"", jso),
         //    Is.EqualTo((EnumByteFlags)7));
 
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByteFlags)8, jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("8").Message));
+
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByteFlags)109, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("109").Message));
 

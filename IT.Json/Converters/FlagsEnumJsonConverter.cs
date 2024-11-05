@@ -13,7 +13,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 {
     private readonly byte[] _sep;
     private readonly int _maxLength;
-    //private readonly TNumber _sumNumber;
+    private readonly TNumber _maxNumber;
     private readonly Dictionary<TNumber, byte[]> _numberToUtf8Name;
 
     public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
@@ -26,7 +26,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var numberToUtf8Name = new Dictionary<TNumber, byte[]>(_valueToUtf8Name.Count);
 
         var sumNameLength = 0;
-        //TNumber sumNumber = default;
+        TNumber maxNumber = default;
 
         foreach (var pair in _valueToUtf8Name)
         {
@@ -34,10 +34,11 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             TNumber number = Unsafe.As<TEnum, TNumber>(ref key);
             numberToUtf8Name.Add(number, pair.Value);
 
-            //if (number > maxNumber) maxNumber = number;
+            maxNumber |= number;
 
             sumNameLength += pair.Value.Length;
         }
+        _maxNumber = maxNumber;
         _numberToUtf8Name = numberToUtf8Name;
         _maxLength = sumNameLength + (sep.Length * (_valueToUtf8Name.Count - 1));
         _sep = sep;
@@ -52,6 +53,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         else
         {
             TNumber numberValue = Unsafe.As<TEnum, TNumber>(ref value);
+
+            if (numberValue > _maxNumber) goto NotMapped;
 
             var sep = _sep;
             var length = _maxLength;
