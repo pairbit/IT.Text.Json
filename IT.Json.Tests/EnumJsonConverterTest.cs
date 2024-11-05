@@ -91,7 +91,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new StrictEnumJsonConverter<EnumByte>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new EnumJsonConverter<EnumByte>(JsonNamingPolicy.CamelCase));
 
         Assert.That(JsonSerializer.Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
         Assert.That(JsonSerializer.Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
@@ -174,7 +174,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Flags_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new StrictEnumFlagsJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new FlagsEnumJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));

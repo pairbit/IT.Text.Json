@@ -7,7 +7,7 @@ using System.Text.Json;
 
 namespace IT.Json.Converters;
 
-public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConverter<TEnum>
+public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum
     where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
 {
@@ -16,7 +16,7 @@ public class StrictEnumFlagsJsonConverter<TEnum, TNumber> : StrictEnumJsonConver
     //private readonly TNumber _sumNumber;
     private readonly Dictionary<TNumber, byte[]> _numberToUtf8Name;
 
-    public StrictEnumFlagsJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
             throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));

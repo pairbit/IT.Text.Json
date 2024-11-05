@@ -5,11 +5,11 @@ using System.Text.Json.Serialization;
 
 namespace IT.Json.Converters;
 
-public class StrictEnumJsonConverterFactory : JsonConverterFactory
+public class EnumJsonConverterFactory : JsonConverterFactory
 {
     private readonly JsonNamingPolicy? _namingPolicy;
 
-    public StrictEnumJsonConverterFactory(JsonNamingPolicy? namingPolicy)
+    public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy)
     {
         _namingPolicy = namingPolicy;
     }
@@ -21,8 +21,8 @@ public class StrictEnumJsonConverterFactory : JsonConverterFactory
         if (!typeToConvert.IsEnum) throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "type not supported");
 
         var type = typeToConvert.GetCustomAttribute<FlagsAttribute>() != null
-            ? typeof(StrictEnumFlagsJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType())
-            : typeof(StrictEnumJsonConverter<>).MakeGenericType(typeToConvert);
+            ? typeof(FlagsEnumJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType())
+            : typeof(EnumJsonConverter<>).MakeGenericType(typeToConvert);
 
         return (JsonConverter?)Activator.CreateInstance(type, _namingPolicy);
     }
