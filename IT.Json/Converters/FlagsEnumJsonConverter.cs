@@ -16,7 +16,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly TNumber _maxNumber;
     private readonly (TNumber, byte[])[] _numberUtf8Name;
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, byte[]? sep = null) : base(namingPolicy)
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null) 
+        : base(namingPolicy, seed)
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())
             throw new ArgumentException($"UnderlyingType enum '{typeof(TEnum).FullName}' is '{typeof(TEnum).GetEnumUnderlyingType().FullName}'", nameof(TNumber));

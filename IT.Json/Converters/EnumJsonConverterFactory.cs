@@ -8,10 +8,14 @@ namespace IT.Json.Converters;
 public class EnumJsonConverterFactory : JsonConverterFactory
 {
     private readonly JsonNamingPolicy? _namingPolicy;
+    private readonly int _seed;
+    private readonly byte[]? _sep;
 
-    public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy)
+    public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
     {
         _namingPolicy = namingPolicy;
+        _seed = seed;
+        _sep = sep;
     }
 
     public override bool CanConvert(Type typeToConvert) => typeToConvert.IsEnum;
@@ -20,10 +24,14 @@ public class EnumJsonConverterFactory : JsonConverterFactory
     {
         if (!typeToConvert.IsEnum) throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "type not supported");
 
-        var type = typeToConvert.GetCustomAttribute<FlagsAttribute>() != null
-            ? typeof(FlagsEnumJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType())
-            : typeof(EnumJsonConverter<>).MakeGenericType(typeToConvert);
+        if (typeToConvert.GetCustomAttribute<FlagsAttribute>() != null)
+        {
+            return (JsonConverter?)Activator.CreateInstance(
+                typeof(FlagsEnumJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType()),
+                _namingPolicy, _seed, _sep);
+        }
 
-        return (JsonConverter?)Activator.CreateInstance(type, _namingPolicy);
+        return (JsonConverter?)Activator.CreateInstance(typeof(EnumJsonConverter<>).MakeGenericType(typeToConvert),
+            _namingPolicy, _seed);
     }
 }
