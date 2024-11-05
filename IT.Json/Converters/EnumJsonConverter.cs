@@ -124,10 +124,11 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
     {
-        if (!_valueToUtf8Name.TryGetValue(value, out var utf8Name)) throw NotMapped(value.ToString());
+        if (!_valueToUtf8Name.TryGetValue(value, out var utf8Name)) throw NotMapped(value);
 
         writer.WriteStringValue(utf8Name);
     }
 
-    protected static JsonException NotMapped(string? value) => new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
+    protected static JsonException NotMapped<T>(T value) => 
+        new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }

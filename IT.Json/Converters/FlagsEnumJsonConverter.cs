@@ -62,7 +62,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         {
             TNumber numberValue = Unsafe.As<TEnum, TNumber>(ref value);
 
-            if (numberValue > _maxNumber) throw NotMapped(value.ToString());
+            if (numberValue > _maxNumber) throw NotMapped(value);
 
             bool status;
             scoped Span<byte> utf8Value;
@@ -93,7 +93,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                 System.Diagnostics.Debug.Assert(numberValue != default);
 #endif
-                throw NotMapped(value.ToString());
+                throw NotMapped(value);
             }
 
 #if DEBUG
