@@ -13,11 +13,12 @@ namespace IT.Json.Converters;
 public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
+    protected readonly int _seed;
     protected readonly int _maxNameLength;
     protected readonly FrozenDictionary<int, TEnum> _xxhToValue;
     protected readonly FrozenDictionary<TEnum, byte[]> _valueToUtf8Name;
 
-    public EnumJsonConverter(JsonNamingPolicy? namingPolicy)
+    public EnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0)
     {
         var type = typeof(TEnum);
         var values = Enum.GetValues<TEnum>();
@@ -40,15 +41,14 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             var utf8Name = utf8.GetBytes(name);
             if (utf8Name.Length > maxNameLength) maxNameLength = utf8Name.Length;
 
-            var xxh = (int)XXH.HashToUInt32(utf8Name);
+            var xxh = (int)XXH.HashToUInt32(utf8Name, seed);
 
-            //TODO: set seed
             if (!xxhToValue.TryAdd(xxh, value))
-                throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'");
+                throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'. Increment seed", nameof(seed));
 
             valueToUtf8Name.Add(value, utf8Name);
         }
-
+        _seed = seed;
         _maxNameLength = maxNameLength;
         _xxhToValue = xxhToValue.ToFrozenDictionary();
         _valueToUtf8Name = valueToUtf8Name.ToFrozenDictionary();
@@ -86,12 +86,12 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
                 if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
-                xxh = (int)XXH.HashToUInt32(span);
+                xxh = (int)XXH.HashToUInt32(span, _seed);
             }
             else
             {
                 //TODO: static cache?
-                var xxhAlg = new XXH();
+                var xxhAlg = new XXH(_seed);
                 var position = sequence.Start;
                 var length = 0;
                 while (sequence.TryGet(ref position, out var memory))
@@ -113,7 +113,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
             if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
 
-            xxh = (int)XXH.HashToUInt32(span);
+            xxh = (int)XXH.HashToUInt32(span, _seed);
         }
 
         if (_xxhToValue.TryGetValue(xxh, out var value)) return value;
