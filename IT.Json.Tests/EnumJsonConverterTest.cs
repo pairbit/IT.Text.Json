@@ -264,6 +264,22 @@ public class EnumJsonConverterTest
             Is.EqualTo(ArgEnumMoreOne<EnumOne>().Message));
     }
 
+    [Test]
+    public void StrictEnum_Flags_Factory_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 0, "|"u8.ToArray()));
+
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
+        Assert.That(JsonSerializer.Serialize(EnumInt.x1, jso), Is.EqualTo("\"x1\""));
+
+        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one\"", jso), Is.EqualTo(EnumByteFlags.One));
+        Assert.That(JsonSerializer.Deserialize<EnumInt>("\"x1\"", jso), Is.EqualTo(EnumInt.x1));
+
+        Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
+            Is.EqualTo("\"two|five\""));
+    }
+
     private static ArgumentException ArgEnumMoreOne<TEnum>() =>
         new($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
 
