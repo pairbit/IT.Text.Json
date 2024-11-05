@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -60,13 +59,13 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var valueToUtf8NameType = _valueToUtf8Name.GetType().FullName;
         if (values.Length <= 10)
         {
-            Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
-            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
+            System.Diagnostics.Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
+            System.Diagnostics.Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.SmallValueTypeComparableFrozenDictionary`2"));
         }
         else
         {
-            Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
-            Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
+            System.Diagnostics.Debug.Assert(xxhToValueType!.StartsWith("System.Collections.Frozen.Int32FrozenDictionary`1"));
+            System.Diagnostics.Debug.Assert(valueToUtf8NameType!.StartsWith("System.Collections.Frozen.ValueTypeDefaultComparerFrozenDictionary`2"));
         }
 #endif
     }

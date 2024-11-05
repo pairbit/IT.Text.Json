@@ -30,6 +30,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
         sep ??= ", "u8.ToArray();
 
+        //TODO: возможно определить более эффективный размер??
         var sumNameLength = 0;
         TNumber maxNumber = default;
 
@@ -87,7 +88,17 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 }
             }
 
-            if (!status && numberValue != default) throw NotMapped(value.ToString());
+            if (!status)
+            {
+#if DEBUG
+                System.Diagnostics.Debug.Assert(numberValue != default);
+#endif
+                throw NotMapped(value.ToString());
+            }
+
+#if DEBUG
+            System.Diagnostics.Debug.Assert(numberValue == default);
+#endif
 
             writer.WriteStringValue(utf8Value);
         }

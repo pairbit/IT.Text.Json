@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Buffers.Text;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -59,10 +58,10 @@ internal class MemoryByteJsonConverter : JsonConverter<Memory<byte>>
 
                 throw new InvalidOperationException($"OperationStatus is {status}");
             }
-
-            Debug.Assert(consumed == utf8.Length);
-            Debug.Assert(written == decoded.Length);
-
+#if DEBUG
+            System.Diagnostics.Debug.Assert(consumed == utf8.Length);
+            System.Diagnostics.Debug.Assert(written == decoded.Length);
+#endif
             return decoded.Slice(0, written);
         }
     }
