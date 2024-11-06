@@ -68,6 +68,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw NotEscaped();
         if (reader.HasValueSequence)
         {
             var sequence = reader.ValueSequence;

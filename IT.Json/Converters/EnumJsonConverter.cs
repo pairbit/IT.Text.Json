@@ -84,6 +84,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw NotEscaped();
         if (reader.HasValueSequence)
         {
             var sequence = reader.ValueSequence;
@@ -147,6 +148,8 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
         return _xxhToValue.TryGetValue(xxh, out value);
     }
+
+    protected static NotSupportedException NotEscaped() => new("Escaped value is not supported");
 
     protected static JsonException NotString() => new("Expected string");
 
