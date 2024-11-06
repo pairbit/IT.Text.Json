@@ -108,7 +108,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                 System.Diagnostics.Debug.Assert(numberValue != default);
 #endif
-                throw NotMapped(value);
+                throw Unsafe.As<TEnum, TNumber>(ref value) != numberValue ? NotMappedBit(value, numberValue) : NotMapped(value);
             }
         }
     }
@@ -146,4 +146,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         utf8Value = utf8Value.Slice(start);
         return false;
     }
+
+    private static JsonException NotMappedBit(TEnum value, TNumber bit) =>
+        new($"The bit {bit} JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }

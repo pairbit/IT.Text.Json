@@ -250,10 +250,10 @@ public class EnumJsonConverterTest
             Is.EqualTo(JsonNotMapped<EnumIntFlags>("2").Message));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)7, jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumIntFlags>("7").Message));
+            Is.EqualTo(JsonNotMappedBit<EnumIntFlags>("7", "2").Message));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)10, jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumIntFlags>("10").Message));
+            Is.EqualTo(JsonNotMappedBit<EnumIntFlags>("10", "2").Message));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)14, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumIntFlags>("14").Message));
@@ -307,4 +307,7 @@ public class EnumJsonConverterTest
 
     private static JsonException JsonNotMapped<TEnum>(string? value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
+
+    private static JsonException JsonNotMappedBit<TEnum>(string? value, string bit) =>
+        new($"The bit {bit} JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
 }
