@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.Json;
 using XXH = System.IO.Hashing.XxHash32;
 
@@ -18,6 +20,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
     private readonly (TNumber, byte[])[] _numberUtf8Name;
+    private readonly FrozenDictionary<int, TNumber> _xxhToNumber;
 
     static FlagsEnumJsonConverter()
     {
@@ -48,6 +51,14 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
             numberUtf8Name[i] = (number, utf8Name);
         }
+
+        var xxhToNumber = new Dictionary<int, TNumber>(values.Length);
+        foreach (var pair in _xxhToValue)
+        {
+            var value = pair.Value;
+            xxhToNumber.Add(pair.Key, Unsafe.As<TEnum, TNumber>(ref value));
+        }
+        _xxhToNumber = xxhToNumber.ToFrozenDictionary();
         _maxNumber = maxNumber;
         _numberUtf8Name = numberUtf8Name;
         _maxLength = sumNameLength + (sep.Length * (values.Length - 1));
@@ -62,16 +73,16 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             var sequence = reader.ValueSequence;
             if (sequence.IsSingleSegment)
             {
-                return TryReadSpan(sequence.First.Span, out var value) ? value : throw NotMapped(reader.GetString());
+                return TryReadSpan(sequence.First.Span, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
             }
             else
             {
-                return TryReadSequence(sequence, out var value) ? value : throw NotMapped(reader.GetString());
+                return TryReadSequence(sequence, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
             }
         }
         else
         {
-            return TryReadSpan(reader.ValueSpan, out var value) ? value : throw NotMapped(reader.GetString());
+            return TryReadSpan(reader.ValueSpan, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
         }
     }
 
@@ -169,17 +180,50 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         return false;
     }
 
-    private new bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value)
+    private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out string? bit)
     {
+        bit = null;
         var index = span.IndexOf(_sep);
-        if (index == -1) return base.TryReadSpan(span, out value);
+        if (index == -1) return TryReadSpan(span, out value);
 
-        throw new NotImplementedException();
+        TNumber numberValue = default;
+        TNumber number;
+        var xxhToNumber = _xxhToNumber;
+        var sep = _sep;
+        do
+        {
+            if (!xxhToNumber.TryGetValue((int)XXH.HashToUInt32(span.Slice(0, index)), out number))
+            {
+                value = default;
+                bit = Encoding.UTF8.GetString(span.Slice(0, index));
+                return false;
+            }
+
+            numberValue |= number;
+
+            span = span.Slice(index + sep.Length);
+
+            index = span.IndexOf(sep);
+
+        } while (index > -1);
+
+        if (!xxhToNumber.TryGetValue((int)XXH.HashToUInt32(span), out number))
+        {
+            value = default;
+            bit = Encoding.UTF8.GetString(span);
+            return false;
+        }
+
+        numberValue |= number;
+
+        value = Unsafe.As<TNumber, TEnum>(ref numberValue);
+        return true;
     }
 
-    private new bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value)
+    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? bit)
     {
         //TODO: static cache?
+        bit = null;
         var xxhAlg = new XXH(_seed);
         var position = sequence.Start;
         var length = 0;
@@ -206,7 +250,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         }
 
         var xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
-
         return _xxhToValue.TryGetValue(xxh, out value);
     }
 
