@@ -183,9 +183,12 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out string? bit)
     {
-        bit = null;
         var index = span.IndexOf(_sep);
-        if (index == -1) return TryReadSpan(span, out value);
+        if (index == -1)
+        {
+            bit = null;
+            return TryReadSpan(span, out value);
+        }
 
         TNumber numberValue = default;
         TNumber number;
@@ -216,7 +219,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         numberValue |= number;
 
         value = Unsafe.As<TNumber, TEnum>(ref numberValue);
-
+        bit = null;
         return true;
 
     invalid:
