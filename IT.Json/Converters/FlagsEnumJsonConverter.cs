@@ -73,10 +73,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             {
                 utf8Value = stackalloc byte[length];
                 status = TryWrite(ref utf8Value, ref numberValue);
-
+                if (status)
+                {
 #if DEBUG
-                System.Diagnostics.Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> stackalloc");
+                    System.Diagnostics.Debug.Assert(numberValue == default);
 #endif
+                    writer.WriteStringValue(utf8Value);
+                }
             }
             else
             {
@@ -86,13 +89,17 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 try
                 {
                     status = TryWrite(ref utf8Value, ref numberValue);
+                    if (status)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.Assert(numberValue == default);
+#endif
+                        writer.WriteStringValue(utf8Value);
+                    }
                 }
                 finally
                 {
-                    pool.Return(rented);
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine($"FlagsEnumJsonConverter<{typeof(TEnum).FullName}> pool Return");
-#endif
+                    pool.Return(rented, true);
                 }
             }
 
@@ -103,12 +110,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #endif
                 throw NotMapped(value);
             }
-
-#if DEBUG
-            System.Diagnostics.Debug.Assert(numberValue == default);
-#endif
-
-            writer.WriteStringValue(utf8Value);
         }
     }
 

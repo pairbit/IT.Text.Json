@@ -41,9 +41,19 @@ enum EnumIntFlags
     Eight = 8
 }
 
+[Flags]
 enum EnumInt
 {
-    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
+    [JsonPropertyName("00000000000000000000000000000000000000000")] x0,
+    [JsonPropertyName("11111111111111111111111111111111111111111")] x1,
+    [JsonPropertyName("22222222222222222222222222222222222222222")] x2,
+    [JsonPropertyName("33333333333333333333333333333333333333333")] x3,
+    [JsonPropertyName("44444444444444444444444444444444444444444")] x4,
+    [JsonPropertyName("555555555555555555555555555555555555555555")] x5,
+    [JsonPropertyName("666666666666666666666666666666666666666666")] x6,
+    [JsonPropertyName("777777777777777777777777777777777777777777")] x7,
+    [JsonPropertyName("8888888888888888888888888888888888888888888")] x8,
+    [JsonPropertyName("99999999999999999999999999999999999999999999")] x9
 }
 
 enum EnumEmpty { }
@@ -274,13 +284,16 @@ public class EnumJsonConverterTest
         jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 0, "|"u8.ToArray()));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
-        Assert.That(JsonSerializer.Serialize(EnumInt.x1, jso), Is.EqualTo("\"x1\""));
+        Assert.That(JsonSerializer.Serialize(EnumInt.x1, jso), Is.EqualTo("\"11111111111111111111111111111111111111111\""));
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one\"", jso), Is.EqualTo(EnumByteFlags.One));
-        Assert.That(JsonSerializer.Deserialize<EnumInt>("\"x1\"", jso), Is.EqualTo(EnumInt.x1));
+        Assert.That(JsonSerializer.Deserialize<EnumInt>("\"11111111111111111111111111111111111111111\"", jso), Is.EqualTo(EnumInt.x1));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
             Is.EqualTo("\"two|five\""));
+
+        Assert.That(JsonSerializer.Serialize(EnumInt.x2 | EnumInt.x8, jso),
+            Is.EqualTo("\"22222222222222222222222222222222222222222|8888888888888888888888888888888888888888888\""));
     }
 
     private static ArgumentException ArgEnumNotBase<TEnum>() =>
