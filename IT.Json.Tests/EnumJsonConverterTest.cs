@@ -283,6 +283,18 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\" two \"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>(" two ").Message));
 
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"onef, two\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("onef").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"one, two4\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("two4").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"one111, two\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("one111").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"one, two444\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("two444").Message));
+
         Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumOne, uint>(JsonNamingPolicy.CamelCase)).GetBaseException().Message,
             Is.EqualTo(ArgEnumNotBase<EnumOne>().Message));
 
