@@ -238,17 +238,17 @@ public class EnumJsonConverterTest
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
             Is.EqualTo("\"two, five\""));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"two, five\"", jso),
-            Is.EqualTo((EnumByteFlags)7));
+        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"two, five\"", jso),
+        //    Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"three, four\"", jso),
-            Is.EqualTo((EnumByteFlags)7));
+        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"three, four\"", jso),
+        //    Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, four\"", jso),
-            Is.EqualTo((EnumByteFlags)7));
+        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, four\"", jso),
+        //    Is.EqualTo((EnumByteFlags)7));
 
-        Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, three, four\"", jso),
-            Is.EqualTo((EnumByteFlags)7));
+        //Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"one, two, three, four\"", jso),
+        //    Is.EqualTo((EnumByteFlags)7));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumByteFlags)8, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("8").Message));

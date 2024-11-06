@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using XXH = System.IO.Hashing.XxHash32;
 
 namespace IT.Json.Converters;
 
@@ -29,7 +30,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
             : base(namingPolicy, seed)
     {
-        sep ??= ", "u8.ToArray();
+        if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
 
         //TODO: возможно определить более эффективный размер??
         var sumNameLength = 0;
@@ -56,17 +57,22 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw NotString();
-
         if (reader.HasValueSequence)
         {
-
+            var sequence = reader.ValueSequence;
+            if (sequence.IsSingleSegment)
+            {
+                return TryReadSpan(sequence.First.Span, out var value) ? value : throw NotMapped(reader.GetString());
+            }
+            else
+            {
+                return TryReadSequence(sequence, out var value) ? value : throw NotMapped(reader.GetString());
+            }
         }
         else
         {
-
+            return TryReadSpan(reader.ValueSpan, out var value) ? value : throw NotMapped(reader.GetString());
         }
-
-        return base.Read(ref reader, typeToConvert, options);
     }
 
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
@@ -161,6 +167,47 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         }
         utf8Value = utf8Value.Slice(start);
         return false;
+    }
+
+    private new bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value)
+    {
+        var index = span.IndexOf(_sep);
+        if (index == -1) return base.TryReadSpan(span, out value);
+
+        throw new NotImplementedException();
+    }
+
+    private new bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value)
+    {
+        //TODO: static cache?
+        var xxhAlg = new XXH(_seed);
+        var position = sequence.Start;
+        var length = 0;
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            var span = memory.Span;
+
+            if (span.IndexOf(_sep) > -1)
+            {
+                throw new NotImplementedException();
+            }
+
+            length += memory.Length;
+
+            if (length > _maxNameLength)
+            {
+                value = default;
+                return false;
+            }
+
+            xxhAlg.Append(span);
+
+            if (position.GetObject() == null) break;
+        }
+
+        var xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
+
+        return _xxhToValue.TryGetValue(xxh, out value);
     }
 
     private static JsonException NotMappedBit(TEnum value, TNumber bit) =>
