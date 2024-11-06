@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Reflection;
@@ -82,52 +83,23 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType != JsonTokenType.String) throw new JsonException("Expected string");
-
-        int xxh;
-
+        if (reader.TokenType != JsonTokenType.String) throw NotString();
         if (reader.HasValueSequence)
         {
             var sequence = reader.ValueSequence;
             if (sequence.IsSingleSegment)
             {
-                var span = sequence.First.Span;
-
-                if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
-
-                xxh = (int)XXH.HashToUInt32(span, _seed);
+                return TryReadSpan(sequence.First.Span, out var value) ? value : throw NotMapped(reader.GetString());
             }
             else
             {
-                //TODO: static cache?
-                var xxhAlg = new XXH(_seed);
-                var position = sequence.Start;
-                var length = 0;
-                while (sequence.TryGet(ref position, out var memory))
-                {
-                    length += memory.Length;
-
-                    if (length > _maxNameLength) throw NotMapped(reader.GetString());
-
-                    xxhAlg.Append(memory.Span);
-
-                    if (position.GetObject() == null) break;
-                }
-                xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
+                return TryReadSequence(sequence, out var value) ? value : throw NotMapped(reader.GetString());
             }
         }
         else
         {
-            var span = reader.ValueSpan;
-
-            if (span.Length > _maxNameLength) throw NotMapped(reader.GetString());
-
-            xxh = (int)XXH.HashToUInt32(span, _seed);
+            return TryReadSpan(reader.ValueSpan, out var value) ? value : throw NotMapped(reader.GetString());
         }
-
-        if (_xxhToValue.TryGetValue(xxh, out var value)) return value;
-
-        throw NotMapped(reader.GetString());
     }
 
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
@@ -136,6 +108,47 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
         writer.WriteStringValue(utf8Name);
     }
+
+    protected bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value)
+    {
+        if (span.Length > _maxNameLength)
+        {
+            value = default;
+            return false;
+        }
+
+        var xxh = (int)XXH.HashToUInt32(span, _seed);
+
+        return _xxhToValue.TryGetValue(xxh, out value);
+    }
+
+    protected bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value)
+    {
+        //TODO: static cache?
+        var xxhAlg = new XXH(_seed);
+        var position = sequence.Start;
+        var length = 0;
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            length += memory.Length;
+
+            if (length > _maxNameLength)
+            {
+                value = default;
+                return false;
+            }
+
+            xxhAlg.Append(memory.Span);
+
+            if (position.GetObject() == null) break;
+        }
+
+        var xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
+
+        return _xxhToValue.TryGetValue(xxh, out value);
+    }
+
+    protected static JsonException NotString() => new("Expected string");
 
     protected static JsonException NotMapped<T>(T value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");

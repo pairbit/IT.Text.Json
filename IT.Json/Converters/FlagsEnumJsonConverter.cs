@@ -53,6 +53,22 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         _sep = sep;
     }
 
+    public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.String) throw NotString();
+
+        if (reader.HasValueSequence)
+        {
+
+        }
+        else
+        {
+
+        }
+
+        return base.Read(ref reader, typeToConvert, options);
+    }
+
     public override void Write(Utf8JsonWriter writer, TEnum value, JsonSerializerOptions options)
     {
         if (_valueToUtf8Name.TryGetValue(value, out var utf8Name))
