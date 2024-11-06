@@ -149,7 +149,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         return _xxhToValue.TryGetValue(xxh, out value);
     }
 
-    protected static NotSupportedException NotEscaped() => new("Escaped value is not supported");
+    protected static JsonException NotEscaped() => new("Escaped value is not supported");
 
     protected static JsonException NotString() => new("Expected string");
 
