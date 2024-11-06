@@ -190,34 +190,38 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         TNumber number;
         var xxhToNumber = _xxhToNumber;
         var sep = _sep;
+        var seplen = sep.Length;
+        var maxNameLength = _maxNameLength;
+        ReadOnlySpan<byte> utf8Name;
         do
         {
-            if (!xxhToNumber.TryGetValue((int)XXH.HashToUInt32(span.Slice(0, index)), out number))
-            {
-                value = default;
-                bit = Encoding.UTF8.GetString(span.Slice(0, index));
-                return false;
-            }
+            utf8Name = span.Slice(0, index);
+            if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue((int)XXH.HashToUInt32(utf8Name), out number))
+                goto invalid;
 
             numberValue |= number;
 
-            span = span.Slice(index + sep.Length);
+            span = span.Slice(index + seplen);
 
             index = span.IndexOf(sep);
 
         } while (index > -1);
 
-        if (!xxhToNumber.TryGetValue((int)XXH.HashToUInt32(span), out number))
-        {
-            value = default;
-            bit = Encoding.UTF8.GetString(span);
-            return false;
-        }
+        utf8Name = span;
+
+        if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue((int)XXH.HashToUInt32(utf8Name), out number))
+            goto invalid;
 
         numberValue |= number;
 
         value = Unsafe.As<TNumber, TEnum>(ref numberValue);
+
         return true;
+
+    invalid:
+        value = default;
+        bit = Encoding.UTF8.GetString(utf8Name);
+        return false;
     }
 
     private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? bit)
