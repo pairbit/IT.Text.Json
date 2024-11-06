@@ -99,7 +99,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 }
                 finally
                 {
-                    pool.Return(rented, true);
+                    pool.Return(rented);
                 }
             }
 
