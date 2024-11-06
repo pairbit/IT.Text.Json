@@ -37,6 +37,7 @@ enum EnumIntFlags
     None = 0,
     One = 1,
     //Two = 2,
+    Three = 3,
     Four = 4,
     Eight = 8
 }
@@ -249,14 +250,14 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)2, jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumIntFlags>("2").Message));
 
-        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)7, jso)).Message,
-            Is.EqualTo(JsonNotMappedBit<EnumIntFlags>("7", "2").Message));
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)6, jso)).Message,
+            Is.EqualTo(JsonNotMappedBit<EnumIntFlags>("6", "2").Message));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)10, jso)).Message,
             Is.EqualTo(JsonNotMappedBit<EnumIntFlags>("10", "2").Message));
 
-        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)14, jso)).Message,
-            Is.EqualTo(JsonNotMapped<EnumIntFlags>("14").Message));
+        Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Serialize((EnumIntFlags)16, jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumIntFlags>("16").Message));
 
         Assert.That(Assert.Catch<JsonException>(() => JsonSerializer.Deserialize<EnumByteFlags>("\"six\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("six").Message));
