@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
 using XXH = System.IO.Hashing.XxHash32;
 
 namespace IT.Json.Converters;
@@ -74,16 +75,16 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             var sequence = reader.ValueSequence;
             if (sequence.IsSingleSegment)
             {
-                return TryReadSpan(sequence.First.Span, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
+                return TryReadSpan(sequence.First.Span, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
             }
             else
             {
-                return TryReadSequence(sequence, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
+                return TryReadSequence(sequence, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
             }
         }
         else
         {
-            return TryReadSpan(reader.ValueSpan, out var value, out var bit) ? value : throw NotMapped(bit ?? reader.GetString());
+            return TryReadSpan(reader.ValueSpan, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
         }
     }
 
@@ -181,12 +182,12 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         return false;
     }
 
-    private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out string? bit)
+    private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out string? name)
     {
         var index = span.IndexOf(_sep);
         if (index == -1)
         {
-            bit = null;
+            name = null;
             return TryReadSpan(span, out value);
         }
 
@@ -219,19 +220,19 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         numberValue |= number;
 
         value = Unsafe.As<TNumber, TEnum>(ref numberValue);
-        bit = null;
+        name = null;
         return true;
 
     invalid:
         value = default;
-        bit = Encoding.UTF8.GetString(utf8Name);
+        name = Encoding.UTF8.GetString(utf8Name);
         return false;
     }
 
-    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? bit)
+    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
     {
         //TODO: static cache?
-        bit = null;
+        name = null;
         var xxhAlg = new XXH(_seed);
         var position = sequence.Start;
         var length = 0;
