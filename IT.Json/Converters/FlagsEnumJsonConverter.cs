@@ -6,8 +6,6 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Xml.Linq;
-using XXH = System.IO.Hashing.XxHash32;
 
 namespace IT.Json.Converters;
 
@@ -31,8 +29,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         if (_values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
     }
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
-            : base(namingPolicy, seed)
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, long seed = 0, byte[]? sep = null) : base(namingPolicy, seed)
     {
         if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
 
@@ -196,12 +193,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var xxhToNumber = _xxhToNumber;
         var sep = _sep;
         var seplen = sep.Length;
+        var seed = _seed;
         var maxNameLength = _maxNameLength;
         ReadOnlySpan<byte> utf8Name;
         do
         {
             utf8Name = span.Slice(0, index);
-            if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue((int)XXH.HashToUInt32(utf8Name), out number))
+            if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue(HashToInt32(utf8Name, seed), out number))
                 goto invalid;
 
             numberValue |= number;
@@ -214,7 +212,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
         utf8Name = span;
 
-        if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue((int)XXH.HashToUInt32(utf8Name), out number))
+        if (utf8Name.Length > maxNameLength || !xxhToNumber.TryGetValue(HashToInt32(utf8Name, seed), out number))
             goto invalid;
 
         numberValue |= number;
@@ -231,9 +229,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
     {
-        //TODO: static cache?
         name = null;
-        var xxhAlg = new XXH(_seed);
+        var xxhAlg = GetXXH();
         var position = sequence.Start;
         var length = 0;
         while (sequence.TryGet(ref position, out var memory))
@@ -258,7 +255,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             if (position.GetObject() == null) break;
         }
 
-        var xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
+        var xxh = unchecked((int)xxhAlg.GetCurrentHashAsUInt64());
         return _xxhToValue.TryGetValue(xxh, out value);
     }
 

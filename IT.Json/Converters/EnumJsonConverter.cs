@@ -2,19 +2,22 @@
 using System.Buffers;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.IO.Hashing;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using XXH = System.IO.Hashing.XxHash32;
 
 namespace IT.Json.Converters;
 
 public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
+    [ThreadStatic]
+    private static XxHash3? _xxh;
+
     protected static readonly TEnum[] _values;
-    protected readonly int _seed;
+    protected readonly long _seed;
     protected readonly int _maxNameLength;
     protected readonly FrozenDictionary<int, TEnum> _xxhToValue;
     protected readonly FrozenDictionary<TEnum, byte[]> _valueToUtf8Name;
@@ -28,7 +31,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         _values = values;
     }
 
-    public EnumJsonConverter(JsonNamingPolicy? namingPolicy, int seed = 0)
+    public EnumJsonConverter(JsonNamingPolicy? namingPolicy, long seed = 0)
     {
         var type = typeof(TEnum);
         var values = _values;
@@ -36,7 +39,6 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
         var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
         var maxNameLength = 0;
-
         foreach (var value in values)
         {
             var name = value.ToString();
@@ -51,10 +53,9 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             var utf8Name = utf8.GetBytes(name);
             if (utf8Name.Length > maxNameLength) maxNameLength = utf8Name.Length;
 
-            var xxh = (int)XXH.HashToUInt32(utf8Name, seed);
-
+            var xxh = HashToInt32(utf8Name, seed);
             if (!xxhToValue.TryAdd(xxh, value))
-                throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'. Increment seed", nameof(seed));
+                throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'. Change name or increment seed", nameof(seed));
 
             valueToUtf8Name.Add(value, utf8Name);
         }
@@ -118,15 +119,26 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             return false;
         }
 
-        var xxh = (int)XXH.HashToUInt32(span, _seed);
+        return _xxhToValue.TryGetValue(HashToInt32(span, _seed), out value);
+    }
 
-        return _xxhToValue.TryGetValue(xxh, out value);
+    protected XxHash3 GetXXH()
+    {
+        var xxh = _xxh;
+        if (xxh == null)
+        {
+            xxh = _xxh = new XxHash3(_seed);
+        }
+        else
+        {
+            xxh.Reset();
+        }
+        return xxh;
     }
 
     protected bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value)
     {
-        //TODO: static cache?
-        var xxhAlg = new XXH(_seed);
+        var xxhAlg = GetXXH();
         var position = sequence.Start;
         var length = 0;
         while (sequence.TryGet(ref position, out var memory))
@@ -144,10 +156,13 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             if (position.GetObject() == null) break;
         }
 
-        var xxh = (int)xxhAlg.GetCurrentHashAsUInt32();
+        var xxh = unchecked((int)xxhAlg.GetCurrentHashAsUInt64());
 
         return _xxhToValue.TryGetValue(xxh, out value);
     }
+
+    protected static int HashToInt32(ReadOnlySpan<byte> span, long seed)
+        => unchecked((int)XxHash3.HashToUInt64(span, seed));
 
     protected static JsonException NotEscaped() => new("Escaped value is not supported");
 
