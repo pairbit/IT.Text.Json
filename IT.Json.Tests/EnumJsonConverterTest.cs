@@ -88,30 +88,30 @@ public static class Ext
         for (int i = 0; i < span.Length; i++)
         {
             var s = span[i];
-            var eq = EqualityComparer<T>.Default.Equals(v, s);
-
-            if (!eq)
-            {
-                if (len == 0) continue;
-
-                v = value[0];
-                index = -1;
-                len = 0;
-                eq = EqualityComparer<T>.Default.Equals(v, s);
-            }
-
-            if (eq)
+            if (EqualityComparer<T>.Default.Equals(v, s))
             {
                 if (index == -1) index = i;
-
-                len++;
-
-                if (len == maxLength)
+                if (++len == maxLength)
                 {
                     length = len;
                     return index;
                 }
                 v = value[len];
+            }
+            else if (len > 0)
+            {
+                v = value[0];
+                if (EqualityComparer<T>.Default.Equals(v, s))
+                {
+                    index = i;
+                    len = 1;
+                    v = value[1];
+                }
+                else
+                {
+                    index = -1;
+                    len = 0;
+                }
             }
         }
         length = len;
@@ -149,6 +149,12 @@ public class EnumJsonConverterTest
         Assert.That(index, Is.EqualTo(-1));
         Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
         Assert.That(length, Is.EqualTo(0));
+
+        s = "1, 2, |3"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(4));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(3));
 
         s = "1,, |2"u8;
         index = s.IndexOfPart(sep, out length);
