@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IT.Json.Internal;
+using System;
 using System.Buffers;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -158,9 +159,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             if (position.GetObject() == null) break;
         }
 
-        var xxh = unchecked((int)xxhAlg.GetCurrentHashAsUInt64());
-
-        return _xxhToValue.TryGetValue(xxh, out value);
+        return _xxhToValue.TryGetValue(xxhAlg.HashToInt32(), out value);
     }
 
     protected static int HashToInt32(ReadOnlySpan<byte> span, long seed)

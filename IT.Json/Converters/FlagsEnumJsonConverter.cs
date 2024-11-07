@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IT.Json.Internal;
+using System;
 using System.Buffers;
 using System.Collections.Frozen;
 using System.Collections.Generic;
@@ -233,18 +234,22 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var xxhAlg = GetXXH();
         var position = sequence.Start;
         var length = 0;
+        var sep = _sep;
+        var seplen = sep.Length;
+        var maxNameLength = _maxNameLength;
         while (sequence.TryGet(ref position, out var memory))
         {
-            var span = memory.Span;
+            var len = memory.Length;
+            if (len == 0) continue;
 
-            if (span.IndexOf(_sep) > -1)
+            var span = memory.Span;
+            if (span.IndexOf(sep) > -1)
             {
                 throw new NotImplementedException();
             }
 
-            length += memory.Length;
-
-            if (length > _maxNameLength)
+            length += len;
+            if (length > maxNameLength)
             {
                 value = default;
                 return false;
@@ -255,8 +260,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             if (position.GetObject() == null) break;
         }
 
-        var xxh = unchecked((int)xxhAlg.GetCurrentHashAsUInt64());
-        return _xxhToValue.TryGetValue(xxh, out value);
+        return _xxhToValue.TryGetValue(xxhAlg.HashToInt32(), out value);
     }
 
     private static JsonException NotMappedBit(TEnum value, TNumber bit) =>
