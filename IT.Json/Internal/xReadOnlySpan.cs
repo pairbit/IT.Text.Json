@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 
 namespace IT.Json.Internal;
 
@@ -12,7 +12,7 @@ internal static class xReadOnlySpan
 
         var maxLength = value.Length;
         if (maxLength == 0) throw new ArgumentException("value is empty", nameof(value));
-        
+
         var v = value[0];
         var index = span.IndexOf(v);
         if (index == -1)
