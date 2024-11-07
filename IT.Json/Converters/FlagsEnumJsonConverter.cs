@@ -261,8 +261,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
                 start += length;
                 length = 0;
-                span = span.Slice(index + seplen);
                 len -= index + seplen;
+                if (len == 0)
+                {
+                    if (position.GetObject() == null) break;
+                    continue;
+                }
+                span = span.Slice(index + seplen);
             }
 
             length += len;
