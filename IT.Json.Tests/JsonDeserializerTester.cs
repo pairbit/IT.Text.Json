@@ -72,6 +72,23 @@ public class JsonDeserializerTester
 
                 builder.Reset();
             }
+
+            if (utf8Json.Length > max)
+            {
+                try
+                {
+                    var val = Deserialize<TValue>(SplitToSegments(utf8Json.Length, builder, utf8Json), options);
+
+                    if (!EqualityComparer<TValue>.Default.Equals(value, val))
+                        throw new InvalidOperationException("Sequence Single Segment not Equals");
+                }
+                catch (JsonException ex)
+                {
+                    if (exception == null) throw;
+                    if (exception.Message != ex.Message)
+                        throw new InvalidOperationException("Exception not Equals");
+                }
+            }
         }
         finally
         {
