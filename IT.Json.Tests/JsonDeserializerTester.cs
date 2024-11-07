@@ -36,7 +36,8 @@ public class JsonDeserializerTester
         }
         catch (JsonException ex)
         {
-            if (exception!.Message != ex.Message)
+            if (exception == null) throw;
+            if (exception.Message != ex.Message)
                 throw new InvalidOperationException("Exception not Equals");
         }
 
@@ -65,7 +66,6 @@ public class JsonDeserializerTester
                 catch (JsonException ex)
                 {
                     if (exception == null) throw;
-
                     if (exception.Message != ex.Message)
                         throw new InvalidOperationException("Exception not Equals");
                 }
