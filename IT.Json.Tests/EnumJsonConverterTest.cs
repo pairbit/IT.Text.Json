@@ -134,7 +134,7 @@ public class EnumJsonConverterTest
     }
 
     [Test]
-    public void IndexOf_Test()
+    public void IndexOfPart_Test()
     {
         var sep = ", |"u8;
 
@@ -154,13 +154,31 @@ public class EnumJsonConverterTest
         index = s.IndexOfPart(sep, out length);
         Assert.That(index, Is.EqualTo(4));
         Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
-        Assert.That(length, Is.EqualTo(3));
+        Assert.That(length, Is.EqualTo(sep.Length));
 
         s = "1,, |2"u8;
         index = s.IndexOfPart(sep, out length);
         Assert.That(index, Is.EqualTo(2));
         Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
         Assert.That(length, Is.EqualTo(sep.Length));
+
+        s = "1, , |2"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(3));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
+        s = "1, 2,"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(4));
+        Assert.That(length, Is.EqualTo(1));
+        Assert.That(s.IndexOf(sep), Is.EqualTo(-1));
+
+        s = "1, 2, "u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(4));
+        Assert.That(length, Is.EqualTo(2));
+        Assert.That(s.IndexOf(sep), Is.EqualTo(-1));
     }
 
     [Test]
