@@ -12,22 +12,30 @@ internal static class xReadOnlySpan
 
         var maxLength = value.Length;
         if (maxLength == 0) throw new ArgumentException("value is empty", nameof(value));
-        if (maxLength == 1)
+        
+        var v = value[0];
+        var index = span.IndexOf(v);
+        if (index == -1)
         {
-            var idx = span.IndexOf(value);
-            length = idx == -1 ? 0 : 1;
-            return idx;
+            length = 0;
+            return -1;
         }
 
-        var index = -1;
-        var len = 0;
-        var v = value[0];
-        for (int i = 0; i < span.Length; i++)
+        if (maxLength == 1)
+        {
+            length = 1;
+            return index;
+        }
+
+        var len = 1;
+
+        v = value[1];
+
+        for (int i = index + 1; i < span.Length; i++)
         {
             var s = span[i];
             if (EqualityComparer<T>.Default.Equals(v, s))
             {
-                if (index == -1) index = i;
                 if (++len == maxLength)
                 {
                     length = len;
@@ -41,14 +49,20 @@ internal static class xReadOnlySpan
                 if (EqualityComparer<T>.Default.Equals(v, s))
                 {
                     index = i;
-                    len = 1;
-                    v = value[1];
                 }
                 else
                 {
-                    index = -1;
-                    len = 0;
+                    i++;
+                    index = span.Slice(i).IndexOf(v);
+                    if (index == -1)
+                    {
+                        length = 0;
+                        return -1;
+                    }
+                    i = index = index + i;
                 }
+                len = 1;
+                v = value[1];
             }
         }
         length = len;
