@@ -37,7 +37,7 @@ public class JsonDeserializerTester
         try
         {
             var max = utf8Json.Length < SegmentsMax ? utf8Json.Length : SegmentsMax;
-            for (int i = 2; i < max; i++)
+            for (int i = 2; i <= max; i++)
             {
                 var valueFromSequenceMulti = Deserialize<TValue>(SplitToSegments(i, builder, utf8Json), options);
 
