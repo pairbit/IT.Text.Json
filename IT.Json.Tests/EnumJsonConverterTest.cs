@@ -310,7 +310,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Factory_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 0, "|"u8.ToArray()));
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 234, "|"u8.ToArray()));
 
         Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(Serialize(EnumInt.x1, jso), Is.EqualTo("\"11111111111111111111111111111111111111111\""));

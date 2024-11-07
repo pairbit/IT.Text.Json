@@ -14,7 +14,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
     [ThreadStatic]
-    private static XxHash3? _xxh;
+    private static XxHash3? _xxh;//seed is 0
 
     protected static readonly TEnum[] _values;
     protected readonly long _seed;
@@ -124,10 +124,12 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     protected XxHash3 GetXXH()
     {
+        if (_seed != 0) return new XxHash3(_seed);
+
         var xxh = _xxh;
         if (xxh == null)
         {
-            xxh = _xxh = new XxHash3(_seed);
+            xxh = _xxh = new XxHash3();
         }
         else
         {
