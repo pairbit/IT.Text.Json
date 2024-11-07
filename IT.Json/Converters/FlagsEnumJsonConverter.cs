@@ -233,8 +233,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var xxhAlg = GetXXH();
         var length = 0;
         var xxhToNumber = _xxhToNumber;
-        var sep = _sep;
+        ReadOnlySpan<byte> sep = _sep;
         var seplen = sep.Length;
+        var seplenpart = 0;
         var maxNameLength = _maxNameLength;
         TNumber numberValue = default;
         TNumber number;
@@ -246,9 +247,52 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             if (len == 0) continue;
 
             var span = memory.Span;
-            var index = span.IndexOf(sep);
+
+            if (seplenpart > 0)
+            {
+                if (span.StartsWith(sep.Slice(seplenpart)))
+                {
+                    if (length > maxNameLength) goto invalid;
+                    if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
+                    xxhAlg.Reset();
+
+                    numberValue |= number;
+
+                    start += length + seplen;
+                    length = 0;
+
+                    len -= seplen - seplenpart;
+                    if (len == 0)
+                    {
+                        seplenpart = 0;
+                        if (position.GetObject() == null) break;
+                        continue;
+                    }
+                    span = span.Slice(seplen - seplenpart);
+                }
+                else
+                {
+                    length += seplenpart;
+                    if (length > maxNameLength) goto invalid;
+
+                    xxhAlg.Append(sep.Slice(0, seplenpart));
+                }
+            }
+
+            var index = span.IndexOfPart(sep, out seplenpart);
             if (index > -1)
             {
+                if (seplen != seplenpart)
+                {
+                    length += index;
+                    xxhAlg.Append(span.Slice(0, index));
+                    continue;
+                }
+                else
+                {
+                    seplenpart = 0;
+                }
+
                 length += index;
                 if (length > maxNameLength) goto invalid;
 
