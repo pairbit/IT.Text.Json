@@ -197,26 +197,28 @@ public class EnumJsonConverterTest
     public void Segments()
     {
         var sep = ", |"u8;
-        
-        var s = "1, |2"u8;
-        var index = s.IndexOfPart(sep, out var length);
-        Assert.That(index, Is.EqualTo(1));
-        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
-        Assert.That(length, Is.EqualTo(sep.Length));
-
         var sepPart = sep;
 
         var s1 = "1,"u8;
-        var s2 = " 2"u8;
+        var index = s1.IndexOfPart(sep, out var length);
+        Assert.That(index, Is.EqualTo(1));
+        Assert.That(length, Is.EqualTo(1));
+
+        sepPart = sep.Slice(length);
+
+        var s2 = " |2"u8;
+        Assert.That(s2.StartsWith(sepPart), Is.True);
 
         s1 = "1, "u8;
+        index = s1.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(1));
+        Assert.That(length, Is.EqualTo(2));
+
         s2 = "|2"u8;
 
-
-        Assert.That(s1.EndsWith(sep));
+        sepPart = sep.Slice(length);
+        Assert.That(s2.StartsWith(sepPart), Is.True);
     }
-
-    
 
     [Test]
     public void Default_Test()
