@@ -259,7 +259,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
                 numberValue |= number;
 
-                start += length;
+                start += length + seplen;
                 length = 0;
                 len -= index + seplen;
                 if (len == 0)
