@@ -80,7 +80,12 @@ public static class Ext
         
         var maxLength = value.Length;
         if (maxLength == 0) throw new ArgumentException("value is empty", nameof(value));
-        if (maxLength == 1) throw new ArgumentException("value too small", nameof(value));
+        if (maxLength == 1)
+        {
+            var idx = span.IndexOf(value);
+            length = idx == -1 ? 0 : 1;
+            return idx;
+        }
 
         var index = -1;
         var len = 0;
@@ -191,6 +196,20 @@ public class EnumJsonConverterTest
         Assert.That(index, Is.EqualTo(4));
         Assert.That(length, Is.EqualTo(2));
         Assert.That(s.IndexOf(sep), Is.EqualTo(-1));
+
+        sep = ","u8;
+
+        s = "12,2"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(2));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
+        s = "123"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(-1));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(0));
     }
 
     [Test]
