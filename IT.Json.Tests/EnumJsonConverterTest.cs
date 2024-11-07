@@ -71,6 +71,52 @@ enum EnumEscaped
     Escaped = 0
 }
 
+public static class Ext
+{
+    internal static int IndexOfPart<T>(this ReadOnlySpan<T> span, ReadOnlySpan<T> value, out int length)
+        where T : IEquatable<T>?
+    {
+        if (span.Length == 0) throw new ArgumentException("span is empty", nameof(span));
+        
+        var maxLength = value.Length;
+        if (maxLength == 0) throw new ArgumentException("value is empty", nameof(value));
+        if (maxLength == 1) throw new ArgumentException("value too small", nameof(value));
+
+        var index = -1;
+        var len = 0;
+        var v = value[0];
+        for (int i = 0; i < span.Length; i++)
+        {
+            var s = span[i];
+            var eq = EqualityComparer<T>.Default.Equals(v, s);
+
+            if (!eq && len > 0)
+            {
+                v = value[0];
+                index = -1;
+                len = 0;
+                eq = EqualityComparer<T>.Default.Equals(v, s);
+            }
+
+            if (eq)
+            {
+                if (index == -1) index = i;
+
+                len++;
+
+                if (len == maxLength)
+                {
+                    length = len;
+                    return index;
+                }
+                v = value[len];
+            }
+        }
+        length = len;
+        return index;
+    }
+}
+
 public class EnumJsonConverterTest
 {
     [Test]
@@ -84,6 +130,55 @@ public class EnumJsonConverterTest
             EnumByteFlags.Three | EnumByteFlags.Four |
             EnumByteFlags.Five, Is.EqualTo((EnumByteFlags)7));
     }
+
+    [Test]
+    public void IndexOf_Test()
+    {
+        var sep = ", |"u8;
+
+        var s = "1, |2"u8;
+        var index = s.IndexOfPart(sep, out var length);
+        Assert.That(index, Is.EqualTo(1));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
+        s = "1, 2"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(-1));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(0));
+
+        s = "1,, |2"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(2));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+    }
+
+    [Test]
+    public void Segments()
+    {
+        var sep = ", |"u8;
+        
+        var s = "1, |2"u8;
+        var index = s.IndexOfPart(sep, out var length);
+        Assert.That(index, Is.EqualTo(1));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
+        var sepPart = sep;
+
+        var s1 = "1,"u8;
+        var s2 = " 2"u8;
+
+        s1 = "1, "u8;
+        s2 = "|2"u8;
+
+
+        Assert.That(s1.EndsWith(sep));
+    }
+
+    
 
     [Test]
     public void Default_Test()
