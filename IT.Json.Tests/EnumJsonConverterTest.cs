@@ -103,6 +103,18 @@ public class EnumJsonConverterTest
         Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
         Assert.That(length, Is.EqualTo(sep.Length));
 
+        s = "sdfsdfsdfsdfsdfsdfdsfsdf , |"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(25));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
+        s = "sdfsdfsdfsdfsdfsdfdsfsdf , sdfsdfsdfsdfsdfsdfds, , |fsdf"u8;
+        index = s.IndexOfPart(sep, out length);
+        Assert.That(index, Is.EqualTo(49));
+        Assert.That(index, Is.EqualTo(s.IndexOf(sep)));
+        Assert.That(length, Is.EqualTo(sep.Length));
+
         s = "1, 2"u8;
         index = s.IndexOfPart(sep, out length);
         Assert.That(index, Is.EqualTo(-1));
