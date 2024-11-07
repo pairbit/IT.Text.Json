@@ -8,10 +8,10 @@ namespace IT.Json.Converters;
 public class EnumJsonConverterFactory : JsonConverterFactory
 {
     private readonly JsonNamingPolicy? _namingPolicy;
-    private readonly int _seed;
+    private readonly long _seed;
     private readonly byte[]? _sep;
 
-    public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy, int seed = 0, byte[]? sep = null)
+    public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy, long seed = 0, byte[]? sep = null)
     {
         _namingPolicy = namingPolicy;
         _seed = seed;
