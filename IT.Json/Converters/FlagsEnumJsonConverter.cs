@@ -230,37 +230,60 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
     {
-        name = null;
         var xxhAlg = GetXXH();
-        var position = sequence.Start;
         var length = 0;
+        var xxhToNumber = _xxhToNumber;
         var sep = _sep;
         var seplen = sep.Length;
         var maxNameLength = _maxNameLength;
+        TNumber numberValue = default;
+        TNumber number;
+        var position = sequence.Start;
+        long start = 0;
         while (sequence.TryGet(ref position, out var memory))
         {
             var len = memory.Length;
             if (len == 0) continue;
 
             var span = memory.Span;
-            if (span.IndexOf(sep) > -1)
+            var index = span.IndexOf(sep);
+            if (index > -1)
             {
-                throw new NotImplementedException();
+                length += index;
+                if (length > maxNameLength) goto invalid;
+
+                xxhAlg.Append(span.Slice(0, index));
+
+                if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
+                xxhAlg.Reset();
+
+                numberValue |= number;
+
+                start += length;
+                length = 0;
+                span = span.Slice(index + seplen);
+                len -= index + seplen;
             }
 
             length += len;
-            if (length > maxNameLength)
-            {
-                value = default;
-                return false;
-            }
+            if (length > maxNameLength) goto invalid;
 
             xxhAlg.Append(span);
 
             if (position.GetObject() == null) break;
         }
 
-        return _xxhToValue.TryGetValue(xxhAlg.HashToInt32(), out value);
+        if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
+
+        numberValue |= number;
+        value = Unsafe.As<TNumber, TEnum>(ref numberValue);
+        name = null;
+        return true;
+
+    invalid:
+        value = default;
+        name = Encoding.UTF8.GetString(sequence.Slice(start, length).ToArray());
+        return false;
     }
 
     private static JsonException NotMappedBit(TEnum value, TNumber bit) =>
