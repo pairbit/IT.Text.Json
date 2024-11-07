@@ -90,8 +90,10 @@ public static class Ext
             var s = span[i];
             var eq = EqualityComparer<T>.Default.Equals(v, s);
 
-            if (!eq && len > 0)
+            if (!eq)
             {
+                if (len == 0) continue;
+
                 v = value[0];
                 index = -1;
                 len = 0;
