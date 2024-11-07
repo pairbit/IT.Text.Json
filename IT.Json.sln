@@ -9,6 +9,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IT.Json.Tests", "IT.Json.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IT.Json.Benchmarks", "IT.Json.Benchmarks\IT.Json.Benchmarks.csproj", "{ED1DC546-2CA5-42F3-9545-01D83D881392}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ref", "ref", "{472FB790-BD35-401F-A45A-0CE39B95CE6F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IT.Buffers", "..\IT.Buffers\IT.Buffers\IT.Buffers.csproj", "{B062C643-0C09-4849-8658-330B0B55B19E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,9 +31,16 @@ Global
 		{ED1DC546-2CA5-42F3-9545-01D83D881392}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED1DC546-2CA5-42F3-9545-01D83D881392}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED1DC546-2CA5-42F3-9545-01D83D881392}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B062C643-0C09-4849-8658-330B0B55B19E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B062C643-0C09-4849-8658-330B0B55B19E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B062C643-0C09-4849-8658-330B0B55B19E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B062C643-0C09-4849-8658-330B0B55B19E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B062C643-0C09-4849-8658-330B0B55B19E} = {472FB790-BD35-401F-A45A-0CE39B95CE6F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BF996A99-CD2D-48DD-A2B4-B2211AF8C6B8}
