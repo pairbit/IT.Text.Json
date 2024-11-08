@@ -248,7 +248,20 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
             if (seplenpart > 0)
             {
-                if (span.StartsWith(sep.Slice(seplenpart)))
+                if (seplen - seplenpart > spanlen)
+                {
+                    if (span.SequenceEqual(sep.Slice(seplenpart, spanlen)))
+                    {
+                        seplenpart += spanlen;
+                        continue;
+                    }
+
+                    nameLength += seplenpart;
+                    if (nameLength > maxNameLength) goto invalid;
+
+                    xxhAlg.Append(sep.Slice(0, seplenpart));
+                }
+                else if (span.StartsWith(sep.Slice(seplenpart)))
                 {
                     if (nameLength > maxNameLength) goto invalid;
                     if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;

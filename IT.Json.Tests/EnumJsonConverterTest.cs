@@ -453,7 +453,47 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one|two444\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("two444").Message));
 
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one|4445|two\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("4445").Message));
+
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one|two|sdf\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("sdf").Message));
+    }
+
+    [Test]
+    public void StrictEnum_Factory_Sep4_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 234, "||||"u8.ToArray()));
+
+        Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
+        Assert.That(Serialize(EnumInt.x1, jso), Is.EqualTo("\"11111111111111111111111111111111111111111\""));
+
+        Assert.That(Deserialize<EnumByteFlags>("\"one\"", jso), Is.EqualTo(EnumByteFlags.One));
+        Assert.That(Deserialize<EnumInt>("\"11111111111111111111111111111111111111111\"", jso), Is.EqualTo(EnumInt.x1));
+
+        Assert.That(Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
+            Is.EqualTo("\"two||||five\""));
+
+        Assert.That(Deserialize<EnumByteFlags>("\"two||||five\"", jso),
+            Is.EqualTo(EnumByteFlags.Two | EnumByteFlags.Five));
+
+        Assert.That(Serialize(EnumInt.x2 | EnumInt.x8, jso),
+            Is.EqualTo("\"22222222222222222222222222222222222222222||||8888888888888888888888888888888888888888888\""));
+
+        Assert.That(Serialize(EnumEscaped.Escaped, jso),
+            Is.EqualTo("\"\\u0022Escaped\\u0022\""));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso)).Message,
+            Is.EqualTo("Escaped value is not supported"));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34||||two\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one||||two444\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("two444").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one||||two||||sdf\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("sdf").Message));
     }
 
