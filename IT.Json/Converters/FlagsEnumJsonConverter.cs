@@ -231,7 +231,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
     {
         var xxhAlg = GetXXH();
-        var length = 0;
+        var nameLength = 0;
         var xxhToNumber = _xxhToNumber;
         ReadOnlySpan<byte> sep = _sep;
         var seplen = sep.Length;
@@ -252,28 +252,28 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             {
                 if (span.StartsWith(sep.Slice(seplenpart)))
                 {
-                    if (length > maxNameLength) goto invalid;
+                    if (nameLength > maxNameLength) goto invalid;
                     if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
                     xxhAlg.Reset();
 
                     numberValue |= number;
 
-                    start += length + seplen;
-                    length = 0;
+                    start += nameLength + seplen;
+                    nameLength = 0;
 
-                    len -= seplen - seplenpart;
+                    span = span.Slice(seplen - seplenpart);
+                    len = span.Length;
                     if (len == 0)
                     {
                         seplenpart = 0;
-                        if (position.GetObject() == null) break;
+                        //if (position.GetObject() == null) break;
                         continue;
                     }
-                    span = span.Slice(seplen - seplenpart);
                 }
                 else
                 {
-                    length += seplenpart;
-                    if (length > maxNameLength) goto invalid;
+                    nameLength += seplenpart;
+                    if (nameLength > maxNameLength) goto invalid;
 
                     xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
@@ -284,7 +284,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             {
                 if (seplen != seplenpart)
                 {
-                    length += index;
+                    nameLength += index;
                     xxhAlg.Append(span.Slice(0, index));
                     continue;
                 }
@@ -293,8 +293,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     seplenpart = 0;
                 }
 
-                length += index;
-                if (length > maxNameLength) goto invalid;
+                nameLength += index;
+                if (nameLength > maxNameLength) goto invalid;
 
                 xxhAlg.Append(span.Slice(0, index));
 
@@ -303,23 +303,27 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
                 numberValue |= number;
 
-                start += length + seplen;
-                length = 0;
-                len -= index + seplen;
+                start += nameLength + seplen;
+
+                nameLength = 0;
+
+                span = span.Slice(index + seplen);
+
+                len = span.Length;
+
                 if (len == 0)
                 {
-                    if (position.GetObject() == null) break;
+                    //if (position.GetObject() == null) break;
                     continue;
                 }
-                span = span.Slice(index + seplen);
             }
 
-            length += len;
-            if (length > maxNameLength) goto invalid;
+            nameLength += len;
+            if (nameLength > maxNameLength) goto invalid;
 
             xxhAlg.Append(span);
 
-            if (position.GetObject() == null) break;
+            //if (position.GetObject() == null) break;
         }
 
         if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
@@ -331,7 +335,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     invalid:
         value = default;
-        name = Encoding.UTF8.GetString(sequence.Slice(start, length).ToArray());
+        name = Encoding.UTF8.GetString(sequence.Slice(start, nameLength).ToArray());
         return false;
     }
 
