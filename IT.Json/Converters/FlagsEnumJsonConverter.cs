@@ -231,20 +231,20 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
     {
         var xxhAlg = GetXXH();
-        var nameLength = 0;
         var xxhToNumber = _xxhToNumber;
         ReadOnlySpan<byte> sep = _sep;
         var seplen = sep.Length;
         var seplenpart = 0;
-        var maxNameLength = _maxNameLength;
         TNumber numberValue = default;
         TNumber number;
         var position = sequence.Start;
-        long start = 0;
+        long nameStart = 0;
+        var nameLength = 0;
+        var maxNameLength = _maxNameLength;
         while (sequence.TryGet(ref position, out var memory))
         {
-            var len = memory.Length;
-            if (len == 0) continue;
+            var spanlen = memory.Length;
+            if (spanlen == 0) continue;
 
             var span = memory.Span;
 
@@ -258,12 +258,12 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
                     numberValue |= number;
 
-                    start += nameLength + seplen;
+                    nameStart += nameLength + seplen;
                     nameLength = 0;
 
                     span = span.Slice(seplen - seplenpart);
-                    len = span.Length;
-                    if (len == 0)
+                    spanlen = span.Length;
+                    if (spanlen == 0)
                     {
                         seplenpart = 0;
                         //if (position.GetObject() == null) break;
@@ -303,22 +303,22 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
                 numberValue |= number;
 
-                start += nameLength + seplen;
+                nameStart += nameLength + seplen;
 
                 nameLength = 0;
 
                 span = span.Slice(index + seplen);
 
-                len = span.Length;
+                spanlen = span.Length;
 
-                if (len == 0)
+                if (spanlen == 0)
                 {
                     //if (position.GetObject() == null) break;
                     continue;
                 }
             }
 
-            nameLength += len;
+            nameLength += spanlen;
             if (nameLength > maxNameLength) goto invalid;
 
             xxhAlg.Append(span);
@@ -335,7 +335,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     invalid:
         value = default;
-        name = Encoding.UTF8.GetString(sequence.Slice(start, nameLength).ToArray());
+        name = Encoding.UTF8.GetString(sequence.Slice(nameStart, nameLength).ToArray());
         return false;
     }
 
