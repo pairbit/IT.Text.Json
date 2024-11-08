@@ -276,7 +276,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
             }
-
+        indexOf:
             var index = span.IndexOfPart(sep, out seplenpart);
             if (index > -1)
             {
@@ -314,6 +314,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     //if (position.GetObject() == null) break;
                     continue;
                 }
+                goto indexOf;
             }
 
             nameLength += spanlen;
