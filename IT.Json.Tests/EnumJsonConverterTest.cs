@@ -495,6 +495,9 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one||||two||||sdf\"", jso)).Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("sdf").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one|||two||||sdf\"", jso)).Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("one|||two").Message));
     }
 
     private static string Serialize<T>(T value, JsonSerializerOptions? options = null)

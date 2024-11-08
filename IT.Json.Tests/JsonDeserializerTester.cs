@@ -37,8 +37,7 @@ public class JsonDeserializerTester
         catch (JsonException ex)
         {
             if (exception == null) throw;
-            if (exception.Message != ex.Message)
-                throw new InvalidOperationException("Exception not Equals");
+            Assert.That(exception.Message, Is.EqualTo(ex.Message));
         }
 
         if (utf8Json.Length > 1)
@@ -66,8 +65,7 @@ public class JsonDeserializerTester
                 catch (JsonException ex)
                 {
                     if (exception == null) throw;
-                    if (exception.Message != ex.Message)
-                        throw new InvalidOperationException("Exception not Equals");
+                    Assert.That(exception.Message, Is.EqualTo(ex.Message));
                 }
 
                 builder.Reset();
@@ -85,8 +83,7 @@ public class JsonDeserializerTester
                 catch (JsonException ex)
                 {
                     if (exception == null) throw;
-                    if (exception.Message != ex.Message)
-                        throw new InvalidOperationException("Exception not Equals");
+                    Assert.That(exception.Message, Is.EqualTo(ex.Message));
                 }
             }
         }
