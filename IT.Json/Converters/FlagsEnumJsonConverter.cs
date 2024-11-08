@@ -73,16 +73,16 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             var sequence = reader.ValueSequence;
             if (sequence.IsSingleSegment)
             {
-                return TryReadSpan(sequence.First.Span, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
+                return TryReadSpan(sequence.First.Span, out var value, out var utf8Name) ? value : throw (utf8Name.Length > 0 ? NotMappedUtf8(utf8Name) : NotMapped(reader.GetString()));
             }
             else
             {
-                return TryReadSequence(sequence, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
+                return TryReadSequence(sequence, out var value, out var utf8Name) ? value : throw (utf8Name.Length > 0 ? NotMappedUtf8(utf8Name) : NotMapped(reader.GetString()));
             }
         }
         else
         {
-            return TryReadSpan(reader.ValueSpan, out var value, out var name) ? value : throw NotMapped(name ?? reader.GetString());
+            return TryReadSpan(reader.ValueSpan, out var value, out var utf8Name) ? value : throw (utf8Name.Length > 0 ? NotMappedUtf8(utf8Name) : NotMapped(reader.GetString()));
         }
     }
 
@@ -180,12 +180,12 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         return false;
     }
 
-    private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out string? name)
+    private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out ReadOnlySpan<byte> utf8Name)
     {
         var index = span.IndexOf(_sep);
         if (index == -1)
         {
-            name = null;
+            utf8Name = default;
             return TryReadSpan(span, out value);
         }
 
@@ -196,7 +196,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var seplen = sep.Length;
         var seed = _seed;
         var maxNameLength = _maxNameLength;
-        ReadOnlySpan<byte> utf8Name;
         do
         {
             utf8Name = span.Slice(0, index);
@@ -219,16 +218,15 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         numberValue |= number;
 
         value = Unsafe.As<TNumber, TEnum>(ref numberValue);
-        name = null;
+        utf8Name = default;
         return true;
 
     invalid:
         value = default;
-        name = Encoding.UTF8.GetString(utf8Name);
         return false;
     }
 
-    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out string? name)
+    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out ReadOnlySequence<byte> utf8Name)
     {
         var xxhAlg = GetXXH();
         var xxhToNumber = _xxhToNumber;
@@ -330,15 +328,33 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
         numberValue |= number;
         value = Unsafe.As<TNumber, TEnum>(ref numberValue);
-        name = null;
+        utf8Name = default;
         return true;
 
     invalid:
         value = default;
-        name = Encoding.UTF8.GetString(sequence.Slice(nameStart, nameLength).ToArray());
+        utf8Name = sequence.Slice(nameStart, nameLength);
         return false;
     }
 
     private static JsonException NotMappedBit(TEnum value, TNumber bit) =>
         new($"The bit {bit} JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
+
+    private static JsonException NotMappedUtf8(ReadOnlySpan<byte> utf8)
+    {
+        var utf16 = Encoding.UTF8.GetString(utf8);
+
+        var str = $"The JSON enum '{utf16}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.";
+
+        return new(str);
+    }
+
+    private static JsonException NotMappedUtf8(in ReadOnlySequence<byte> utf8)
+    {
+        var utf16 = Encoding.UTF8.GetString(utf8);
+
+        var str = $"The JSON enum '{utf16}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.";
+
+        return new(str);
+    }
 }
