@@ -14,8 +14,6 @@ namespace IT.Json.Converters;
 public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum
 {
-    [ThreadStatic]
-    private static XxHash3? _xxhDefault;//seed == 0
     protected static readonly TEnum[] _values;
 
     private XxHash3? _xxh;//seed != 0
@@ -129,18 +127,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var xxh = _xxh;
         if (xxh == null)
         {
-            if (_seed != 0)
-            {
-                xxh = _xxh = new XxHash3(_seed);
-            }
-            else
-            {
-                xxh = _xxhDefault;
-                if (xxh == null)
-                {
-                    xxh = _xxh = _xxhDefault = new XxHash3();
-                }
-            }
+            xxh = _xxh = (_seed != 0 ? new XxHash3(_seed) : xXxHash3.Default);
         }
         else
         {
