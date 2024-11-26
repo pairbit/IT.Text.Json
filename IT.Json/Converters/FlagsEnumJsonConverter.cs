@@ -283,7 +283,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 else
                 {
                     nameLength += seplenpart;
-
                     if (nameLength <= maxNameLength)
                         xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
