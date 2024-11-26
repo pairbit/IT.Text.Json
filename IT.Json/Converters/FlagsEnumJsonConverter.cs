@@ -77,7 +77,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
             else
             {
-                return TryReadSequence(sequence, out var value, out var utf8Name) ? value : throw (utf8Name.Length > 0 ? NotMappedUtf8(utf8Name) : NotMapped(reader.GetString()));
+                return TryReadSequence(sequence, out var value, out var utf8Name) ? value : throw NotMappedUtf8(utf8Name);
             }
         }
         else
