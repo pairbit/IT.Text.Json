@@ -257,8 +257,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     }
 
                     nameLength += seplenpart;
-                    //if (nameLength <= maxNameLength)
-                    xxhAlg.Append(sep.Slice(0, seplenpart));
+                    if (nameLength <= maxNameLength)
+                        xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
                 else if (span.StartsWith(sep.Slice(seplenpart)))
                 {
@@ -284,8 +284,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 {
                     nameLength += seplenpart;
 
-                    //if (nameLength <= maxNameLength)
-                    xxhAlg.Append(sep.Slice(0, seplenpart));
+                    if (nameLength <= maxNameLength)
+                        xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
             }
         indexOf:
@@ -295,8 +295,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 if (seplen != seplenpart)
                 {
                     nameLength += index;
-                    //if (nameLength <= maxNameLength)
-                    xxhAlg.Append(span.Slice(0, index));
+                    if (nameLength <= maxNameLength)
+                        xxhAlg.Append(span.Slice(0, index));
                     continue;
                 }
                 else
@@ -331,8 +331,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
 
             nameLength += spanlen;
-            //if (nameLength <= maxNameLength) 
-            xxhAlg.Append(span);
+            if (nameLength <= maxNameLength)
+                xxhAlg.Append(span);
 
             //if (position.GetObject() == null) break;
         }
