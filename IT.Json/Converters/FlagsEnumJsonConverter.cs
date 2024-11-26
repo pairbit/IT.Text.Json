@@ -248,7 +248,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
             if (seplenpart > 0)
             {
-                if (seplen - seplenpart > spanlen)
+                if (seplen - seplenpart >= spanlen)
                 {
                     if (span.SequenceEqual(sep.Slice(seplenpart, spanlen)))
                     {
@@ -257,8 +257,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     }
 
                     nameLength += seplenpart;
-                    if (nameLength > maxNameLength) goto invalid;
-
+                    //if (nameLength <= maxNameLength)
                     xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
                 else if (span.StartsWith(sep.Slice(seplenpart)))
@@ -284,8 +283,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 else
                 {
                     nameLength += seplenpart;
-                    //if (nameLength > maxNameLength) goto invalid;
 
+                    //if (nameLength <= maxNameLength)
                     xxhAlg.Append(sep.Slice(0, seplenpart));
                 }
             }
@@ -296,6 +295,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 if (seplen != seplenpart)
                 {
                     nameLength += index;
+                    //if (nameLength <= maxNameLength)
                     xxhAlg.Append(span.Slice(0, index));
                     continue;
                 }
@@ -331,13 +331,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
 
             nameLength += spanlen;
-            //if (nameLength > maxNameLength) goto invalid;
-
+            //if (nameLength <= maxNameLength) 
             xxhAlg.Append(span);
 
             //if (position.GetObject() == null) break;
         }
 
+        if (nameLength > maxNameLength) goto invalid;
         if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
 
         numberValue |= number;
