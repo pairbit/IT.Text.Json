@@ -21,6 +21,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     , IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
 #endif
 {
+    private static readonly DisabledJavaScriptEncoder _disabledEncoder = new();
     private const int MaxStackallocBytes = 256;
 
     private readonly byte[] _sep;
@@ -128,7 +129,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                     System.Diagnostics.Debug.Assert(numberValue == default);
 #endif
-                    writer.WriteStringValue(JsonEncodedText.Encode(utf8Value));
+                    var encoded = JsonEncodedText.Encode(utf8Value, _disabledEncoder);
+                    writer.WriteStringValue(encoded);
                 }
             }
             else
@@ -144,7 +146,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                         System.Diagnostics.Debug.Assert(numberValue == default);
 #endif
-                        writer.WriteStringValue(JsonEncodedText.Encode(utf8Value));
+                        var encoded = JsonEncodedText.Encode(utf8Value, _disabledEncoder);
+                        writer.WriteStringValue(encoded);
                     }
                 }
                 finally
@@ -386,6 +389,23 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var str = $"The JSON enum '{utf16}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.";
 
         return new(str);
+    }
+
+    class DisabledJavaScriptEncoder : JavaScriptEncoder
+    {
+        public override int MaxOutputCharactersPerInputCharacter 
+            => throw new NotImplementedException();
+
+        public override int FindFirstCharacterToEncodeUtf8(ReadOnlySpan<byte> utf8Text) => -1;
+
+        public override unsafe int FindFirstCharacterToEncode(char* text, int textLength) 
+            => throw new NotImplementedException();
+
+        public override unsafe bool TryEncodeUnicodeScalar(int unicodeScalar, char* buffer, int bufferLength, out int numberOfCharactersWritten)
+            => throw new NotImplementedException();
+
+        public override bool WillEncode(int unicodeScalar) 
+            => throw new NotImplementedException();
     }
 }
 #endif

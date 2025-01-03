@@ -66,10 +66,14 @@ enum EnumOne
     None = 0
 }
 
+[Flags]
 enum EnumEscaped
 {
     [JsonPropertyName("\"Escaped\"")]
-    Escaped = 4
+    Escaped = 4,
+
+    [JsonPropertyName("\"Escaped__2\"")]
+    Escaped2 = 8,
 }
 
 public class EnumJsonConverterTest
@@ -445,8 +449,14 @@ public class EnumJsonConverterTest
         Assert.That(Serialize(EnumEscaped.Escaped, jso),
             Is.EqualTo("\"\\u0022Escaped\\u0022\""));
 
+        Assert.That(Serialize(EnumEscaped.Escaped | EnumEscaped.Escaped2, jso),
+            Is.EqualTo("\"\\u0022Escaped\\u0022|\\u0022Escaped__2\\u0022\""));
+
         Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso),
             Is.EqualTo(EnumEscaped.Escaped));
+
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022|\\u0022Escaped__2\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped | EnumEscaped.Escaped2));
 
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34|two\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
@@ -485,8 +495,14 @@ public class EnumJsonConverterTest
         Assert.That(Serialize(EnumEscaped.Escaped, jso),
             Is.EqualTo("\"\\u0022Escaped\\u0022\""));
 
+        Assert.That(Serialize(EnumEscaped.Escaped | EnumEscaped.Escaped2, jso),
+            Is.EqualTo("\"\\u0022Escaped\\u0022||||\\u0022Escaped__2\\u0022\""));
+
         Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso),
             Is.EqualTo(EnumEscaped.Escaped));
+
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022||||\\u0022Escaped__2\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped | EnumEscaped.Escaped2));
 
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34||||two\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
