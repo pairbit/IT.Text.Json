@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO.Hashing;
 using System.Reflection;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -36,7 +37,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 #else
         Dictionary
 #endif
-        <TEnum, byte[]> _valueToUtf8Name;
+        <TEnum, JsonEncodedText> _valueToUtf8Name;
 
     static EnumJsonConverter()
     {
@@ -52,13 +53,13 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         _values = values;
     }
 
-    public EnumJsonConverter(JsonNamingPolicy? namingPolicy, long seed = 0)
+    public EnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0)
     {
         var type = typeof(TEnum);
         var values = _values;
         var utf8 = Encoding.UTF8;
         var xxhToValue = new Dictionary<int, TEnum>(values.Length);
-        var valueToUtf8Name = new Dictionary<TEnum, byte[]>(values.Length);
+        var valueToUtf8Name = new Dictionary<TEnum, JsonEncodedText>(values.Length);
         var maxNameLength = 0;
         foreach (var value in values)
         {
@@ -72,13 +73,15 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
                 name = namingPolicy.ConvertName(name);
 
             var utf8Name = utf8.GetBytes(name);
-            if (utf8Name.Length > maxNameLength) maxNameLength = utf8Name.Length;
+            var utf8NameEncoded = JsonEncodedText.Encode(utf8Name, encoder);
+            var utf8NameEncodedBytes = utf8NameEncoded.EncodedUtf8Bytes;
+            if (utf8NameEncodedBytes.Length > maxNameLength) maxNameLength = utf8NameEncodedBytes.Length;
 
-            var xxh = HashToInt32(utf8Name, seed);
+            var xxh = HashToInt32(utf8NameEncodedBytes, seed);
             if (!xxhToValue.TryAdd(xxh, value))
                 throw new ArgumentException($"Enum type '{type.FullName}' has collision between '{name}' and '{xxhToValue[xxh]}'. Change name or increment seed", nameof(seed));
 
-            valueToUtf8Name.Add(value, utf8Name);
+            valueToUtf8Name.Add(value, utf8NameEncoded);
         }
         _seed = seed;
         _maxNameLength = maxNameLength;
@@ -114,7 +117,6 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw NotEscaped();
         if (reader.HasValueSequence)
         {
             var sequence = reader.ValueSequence;
@@ -190,8 +192,6 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     protected static int HashToInt32(ReadOnlySpan<byte> span, long seed)
         => unchecked((int)XxHash3.HashToUInt64(span, seed));
-
-    protected static JsonException NotEscaped() => new("Escaped value is not supported");
 
     protected static JsonException NotString() => new("Expected string");
 

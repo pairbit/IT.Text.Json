@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 
 namespace IT.Json.Converters;
@@ -25,7 +26,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly byte[] _sep;
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
-    private readonly (TNumber, byte[])[] _numberUtf8Name;
+    private readonly (TNumber, JsonEncodedText)[] _numberUtf8Name;
     private readonly
 #if NET8_0_OR_GREATER
         FrozenDictionary
@@ -42,7 +43,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         if (_values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
     }
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, long seed = 0, byte[]? sep = null) : base(namingPolicy, seed)
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0, byte[]? sep = null) 
+        : base(namingPolicy, encoder, seed)
     {
         if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
 
@@ -50,7 +52,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         var sumNameLength = 0;
         TNumber maxNumber = default;
         var values = _values;
-        var numberUtf8Name = new (TNumber, byte[])[values.Length];
+        var numberUtf8Name = new (TNumber, JsonEncodedText)[values.Length];
         for (int i = 0; i < values.Length; i++)
         {
             var key = values[i];
@@ -58,7 +60,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             maxNumber |= number;
 
             var utf8Name = _valueToUtf8Name[key];
-            sumNameLength += utf8Name.Length;
+            sumNameLength += utf8Name.EncodedUtf8Bytes.Length;
 
             numberUtf8Name[i] = (number, utf8Name);
         }
@@ -83,7 +85,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw NotEscaped();
         if (reader.HasValueSequence)
         {
             var sequence = reader.ValueSequence;
@@ -127,7 +128,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                     System.Diagnostics.Debug.Assert(numberValue == default);
 #endif
-                    writer.WriteStringValue(utf8Value);
+                    writer.WriteStringValue(JsonEncodedText.Encode(utf8Value));
                 }
             }
             else
@@ -143,7 +144,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 #if DEBUG
                         System.Diagnostics.Debug.Assert(numberValue == default);
 #endif
-                        writer.WriteStringValue(utf8Value);
+                        writer.WriteStringValue(JsonEncodedText.Encode(utf8Value));
                     }
                 }
                 finally
@@ -180,9 +181,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     start -= sep.Length;
                     sep.CopyTo(utf8Value.Slice(start));
                 }
-
-                start -= utf8Name.Length;
-                utf8Name.CopyTo(utf8Value.Slice(start));
+                var utf8NameBytes = utf8Name.EncodedUtf8Bytes;
+                start -= utf8NameBytes.Length;
+                utf8NameBytes.CopyTo(utf8Value.Slice(start));
 
                 numberValue &= ~number;
                 if (numberValue == default)

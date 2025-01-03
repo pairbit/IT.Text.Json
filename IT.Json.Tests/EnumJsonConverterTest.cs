@@ -1,9 +1,9 @@
 ﻿using IT.Json.Converters;
+using IT.Json.Internal;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using IT.Json.Internal;
 
 namespace IT.Json.Tests;
 
@@ -69,7 +69,7 @@ enum EnumOne
 enum EnumEscaped
 {
     [JsonPropertyName("\"Escaped\"")]
-    Escaped = 0
+    Escaped = 4
 }
 
 public class EnumJsonConverterTest
@@ -425,7 +425,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Factory_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 234, "|"u8.ToArray()));
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, jso.Encoder, 234, "|"u8.ToArray()));
 
         Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(Serialize(EnumInt.x1, jso), Is.EqualTo("\"11111111111111111111111111111111111111111\""));
@@ -445,8 +445,8 @@ public class EnumJsonConverterTest
         Assert.That(Serialize(EnumEscaped.Escaped, jso),
             Is.EqualTo("\"\\u0022Escaped\\u0022\""));
 
-        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso))!.Message,
-            Is.EqualTo("Escaped value is not supported"));
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped));
 
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34|two\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
@@ -465,7 +465,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Factory_Sep4_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 234, "||||"u8.ToArray()));
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, jso.Encoder, 234, "||||"u8.ToArray()));
 
         Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(Serialize(EnumInt.x1, jso), Is.EqualTo("\"11111111111111111111111111111111111111111\""));
@@ -485,8 +485,8 @@ public class EnumJsonConverterTest
         Assert.That(Serialize(EnumEscaped.Escaped, jso),
             Is.EqualTo("\"\\u0022Escaped\\u0022\""));
 
-        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso))!.Message,
-            Is.EqualTo("Escaped value is not supported"));
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped));
 
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34||||two\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
@@ -505,7 +505,7 @@ public class EnumJsonConverterTest
     public void StrictEnum_Factory_Sep2_Test()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, 111, "o|"u8.ToArray()));
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, jso.Encoder, 111, "o|"u8.ToArray()));
 
         Assert.That(Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
             Is.EqualTo("\"twoo|five\""));

@@ -56,10 +56,10 @@ public class FlagsEnumJsonConverterBenchmark
     //[Benchmark]
     public EnumByteFlags Deserialize_Number() => JsonSerializer.Deserialize<EnumByteFlags>("15");
 
-    [Benchmark]
+    //[Benchmark]
     public EnumByteFlags Deserialize_String() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsString, _jsoStringCamelCase);
 
-    [Benchmark]
+    //[Benchmark]
     public EnumByteFlags Deserialize_Strict() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsString, _jsoStringCamelCaseStrict);
 
     public void Test()
