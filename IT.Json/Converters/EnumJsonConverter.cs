@@ -40,13 +40,13 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     static EnumJsonConverter()
     {
-//#if NET6_0_OR_GREATER
-//        var values = Enum.GetValues<TEnum>();
-//#else
+#if NET6_0_OR_GREATER
+        var values = Enum.GetValues<TEnum>();
+#else
         var array = Enum.GetValues(typeof(TEnum));
         var values = new TEnum[array.Length];
         Array.Copy(array, values, array.Length);
-//#endif
+#endif
         if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
 
         _values = values;
