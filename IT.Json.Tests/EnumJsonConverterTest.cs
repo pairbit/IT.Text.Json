@@ -536,7 +536,11 @@ public class EnumJsonConverterTest
 
     private static string Serialize<T>(T value, JsonSerializerOptions? options = null)
     {
-        return JsonSerializer.Serialize(value, options);
+        var s1 = JsonSerializer.Serialize(value, options);
+        var s2 = JsonSerializer.Serialize(value, options);
+        if (!Equals(s1, s2)) throw new InvalidOperationException();
+
+        return s2;
     }
 
     private static T? Deserialize<T>(
