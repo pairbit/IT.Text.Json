@@ -7,7 +7,7 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company />
-    <Description>StrictEnumJsonConverter</Description>
+    <Description>JsonConverters</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/pairbit/IT.Json</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
