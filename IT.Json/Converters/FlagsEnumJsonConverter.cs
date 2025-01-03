@@ -1,7 +1,10 @@
-﻿using IT.Json.Internal;
+﻿#if NET7_0_OR_GREATER
+using IT.Json.Internal;
 using System;
 using System.Buffers;
+#if NET8_0_OR_GREATER
 using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -12,7 +15,10 @@ namespace IT.Json.Converters;
 
 public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum
-    where TNumber : unmanaged, IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
+    where TNumber : unmanaged
+#if NET7_0_OR_GREATER
+    , IBitwiseOperators<TNumber, TNumber, TNumber>, IComparisonOperators<TNumber, TNumber, bool>
+#endif
 {
     private const int MaxStackallocBytes = 256;
 
@@ -20,7 +26,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
     private readonly (TNumber, byte[])[] _numberUtf8Name;
-    private readonly FrozenDictionary<int, TNumber> _xxhToNumber;
+    private readonly
+#if NET8_0_OR_GREATER
+        FrozenDictionary
+#else
+        Dictionary
+#endif
+        <int, TNumber> _xxhToNumber;
 
     static FlagsEnumJsonConverter()
     {
@@ -57,7 +69,11 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             var value = pair.Value;
             xxhToNumber.Add(pair.Key, Unsafe.As<TEnum, TNumber>(ref value));
         }
-        _xxhToNumber = xxhToNumber.ToFrozenDictionary();
+        _xxhToNumber = xxhToNumber
+#if NET8_0_OR_GREATER
+            .ToFrozenDictionary()
+#endif
+            ;
         _maxNumber = maxNumber;
         _numberUtf8Name = numberUtf8Name;
         _maxLength = sumNameLength + (sep.Length * (values.Length - 1));
@@ -371,3 +387,4 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         return new(str);
     }
 }
+#endif

@@ -1,7 +1,9 @@
 ﻿using IT.Json.Internal;
 using System;
 using System.Buffers;
+#if NET8_0_OR_GREATER
 using System.Collections.Frozen;
+#endif
 using System.Collections.Generic;
 using System.IO.Hashing;
 using System.Reflection;
@@ -19,13 +21,32 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     private XxHash3? _xxh;//seed != 0
     protected readonly long _seed;
     protected readonly int _maxNameLength;
-    protected readonly FrozenDictionary<int, TEnum> _xxhToValue;
-    protected readonly FrozenDictionary<TEnum, byte[]> _valueToUtf8Name;
+
+    protected readonly
+#if NET8_0_OR_GREATER
+        FrozenDictionary
+#else
+        Dictionary
+#endif
+        <int, TEnum> _xxhToValue;
+
+    protected readonly
+#if NET8_0_OR_GREATER
+        FrozenDictionary
+#else
+        Dictionary
+#endif
+        <TEnum, byte[]> _valueToUtf8Name;
 
     static EnumJsonConverter()
     {
-        var values = Enum.GetValues<TEnum>();
-
+//#if NET6_0_OR_GREATER
+//        var values = Enum.GetValues<TEnum>();
+//#else
+        var array = Enum.GetValues(typeof(TEnum));
+        var values = new TEnum[array.Length];
+        Array.Copy(array, values, array.Length);
+//#endif
         if (values.Length == 0) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' cannot be empty", nameof(TEnum));
 
         _values = values;
@@ -61,10 +82,18 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         }
         _seed = seed;
         _maxNameLength = maxNameLength;
-        _xxhToValue = xxhToValue.ToFrozenDictionary();
-        _valueToUtf8Name = valueToUtf8Name.ToFrozenDictionary();
+        _xxhToValue = xxhToValue
+#if NET8_0_OR_GREATER
+            .ToFrozenDictionary()
+#endif
+            ;
+        _valueToUtf8Name = valueToUtf8Name
+#if NET8_0_OR_GREATER
+            .ToFrozenDictionary()
+#endif
+            ;
 
-#if DEBUG
+#if NET8_0_OR_GREATER && DEBUG
         var xxhToValueType = _xxhToValue.GetType().FullName;
         var valueToUtf8NameType = _valueToUtf8Name.GetType().FullName;
         if (values.Length <= 10)

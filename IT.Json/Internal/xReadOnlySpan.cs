@@ -6,7 +6,10 @@ namespace IT.Json.Internal;
 internal static class xReadOnlySpan
 {
     public static int IndexOfPart<T>(this ReadOnlySpan<T> span, ReadOnlySpan<T> value, out int length)
-        where T : IEquatable<T>?
+        where T : IEquatable<T>
+#if NET7_0_OR_GREATER
+        ?
+#endif
     {
         if (span.Length == 0) throw new ArgumentException("span is empty", nameof(span));
 
