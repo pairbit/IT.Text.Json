@@ -279,6 +279,7 @@ public class EnumJsonConverterTest
             Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
     }
 
+#if NET7_0_OR_GREATER
     [Test]
     public void StringEnum_Flags_Test()
     {
@@ -515,13 +516,18 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"two|five\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("tw").Message));
     }
+#endif
 
     private static string Serialize<T>(T value, JsonSerializerOptions? options = null)
     {
         return JsonSerializer.Serialize(value, options);
     }
 
-    private static T? Deserialize<T>([StringSyntax(StringSyntaxAttribute.Json)] string json, JsonSerializerOptions? options = null)
+    private static T? Deserialize<T>(
+#if NET7_0_OR_GREATER
+        [StringSyntax(StringSyntaxAttribute.Json)]
+#endif
+    string json, JsonSerializerOptions? options = null)
     {
         return JsonDeserializerTester.Deserialize<T>(json, options);
     }

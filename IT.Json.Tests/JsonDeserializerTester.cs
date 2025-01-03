@@ -11,7 +11,11 @@ public class JsonDeserializerTester
 {
     private const int SegmentsMax = 4;
 
-    public static TValue? Deserialize<TValue>([StringSyntax(StringSyntaxAttribute.Json)] string json, JsonSerializerOptions? options = null)
+    public static TValue? Deserialize<TValue>(
+#if NET7_0_OR_GREATER
+        [StringSyntax(StringSyntaxAttribute.Json)]
+#endif
+    string json, JsonSerializerOptions? options = null)
     {
         return Deserialize<TValue>(Encoding.UTF8.GetBytes(json), options);
     }
