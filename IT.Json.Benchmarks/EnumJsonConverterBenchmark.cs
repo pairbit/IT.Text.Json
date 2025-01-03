@@ -35,7 +35,7 @@ public class EnumJsonConverterBenchmark
         _jsoStringCamelCaseStrict.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
     }
 
-    [Benchmark]
+    //[Benchmark]
     public string Serialize_Number() => JsonSerializer.Serialize(EnumByte.Two);
 
     [Benchmark]
@@ -44,7 +44,7 @@ public class EnumJsonConverterBenchmark
     [Benchmark]
     public string Serialize_Strict() => JsonSerializer.Serialize(EnumByte.Two, _jsoStringCamelCaseStrict);
     
-    [Benchmark]
+    //[Benchmark]
     public EnumByte Deserialize_Number() => JsonSerializer.Deserialize<EnumByte>("2");
 
     [Benchmark]
