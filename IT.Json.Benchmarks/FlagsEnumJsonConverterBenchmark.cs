@@ -44,7 +44,7 @@ public class FlagsEnumJsonConverterBenchmark
         _maxFlagsString = Serialize_String();
     }
 
-    //[Benchmark]
+    [Benchmark]
     public string Serialize_Number() => JsonSerializer.Serialize(_maxFlags);
 
     [Benchmark]
@@ -53,13 +53,13 @@ public class FlagsEnumJsonConverterBenchmark
     [Benchmark]
     public string Serialize_Strict() => JsonSerializer.Serialize(_maxFlags, _jsoStringCamelCaseStrict);
     
-    //[Benchmark]
+    [Benchmark]
     public EnumByteFlags Deserialize_Number() => JsonSerializer.Deserialize<EnumByteFlags>("15");
 
-    //[Benchmark]
+    [Benchmark]
     public EnumByteFlags Deserialize_String() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsString, _jsoStringCamelCase);
 
-    //[Benchmark]
+    [Benchmark]
     public EnumByteFlags Deserialize_Strict() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsString, _jsoStringCamelCaseStrict);
 
     public void Test()
