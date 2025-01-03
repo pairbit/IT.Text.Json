@@ -14,6 +14,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="gfoidl.Base64" Version="2.0.0" />
+    <PackageReference Include="IT.Buffers" Version="2.0.0-pre2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit.Analyzers" Version="4.3.0">
@@ -24,7 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\IT.Buffers\IT.Buffers\IT.Buffers.csproj" />
     <ProjectReference Include="..\IT.Json\IT.Json.csproj" />
   </ItemGroup>
 
