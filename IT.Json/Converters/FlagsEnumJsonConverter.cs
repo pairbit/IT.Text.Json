@@ -44,7 +44,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         if (_values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
     }
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0, byte[]? sep = null) 
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0, byte[]? sep = null)
         : base(namingPolicy, encoder, seed)
     {
         if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
@@ -393,18 +393,18 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     class DisabledJavaScriptEncoder : JavaScriptEncoder
     {
-        public override int MaxOutputCharactersPerInputCharacter 
+        public override int MaxOutputCharactersPerInputCharacter
             => throw new NotImplementedException();
 
         public override int FindFirstCharacterToEncodeUtf8(ReadOnlySpan<byte> utf8Text) => -1;
 
-        public override unsafe int FindFirstCharacterToEncode(char* text, int textLength) 
+        public override unsafe int FindFirstCharacterToEncode(char* text, int textLength)
             => throw new NotImplementedException();
 
         public override unsafe bool TryEncodeUnicodeScalar(int unicodeScalar, char* buffer, int bufferLength, out int numberOfCharactersWritten)
             => throw new NotImplementedException();
 
-        public override bool WillEncode(int unicodeScalar) 
+        public override bool WillEncode(int unicodeScalar)
             => throw new NotImplementedException();
     }
 }
