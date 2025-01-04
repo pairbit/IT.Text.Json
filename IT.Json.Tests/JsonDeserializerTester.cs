@@ -62,7 +62,7 @@ public class JsonDeserializerTester
             {
                 try
                 {
-                    var val = Deserialize<TValue>(SplitToSegments(i, builder, utf8Json), options);
+                    var val = Deserialize<TValue>(builder.Add(utf8Json, i).Build(), options);
 
                     if (!EqualityComparer<TValue>.Default.Equals(value, val))
                         throw new InvalidOperationException("Sequence Single Segment not Equals");
@@ -80,7 +80,7 @@ public class JsonDeserializerTester
             {
                 try
                 {
-                    var val = Deserialize<TValue>(SplitToSegments(utf8Json.Length, builder, utf8Json), options);
+                    var val = Deserialize<TValue>(builder.Add(utf8Json, utf8Json.Length).Build(), options);
 
                     if (!EqualityComparer<TValue>.Default.Equals(value, val))
                         throw new InvalidOperationException("Sequence Single Segment not Equals");
@@ -96,23 +96,6 @@ public class JsonDeserializerTester
         {
             ReadOnlySequenceBuilderPool<byte>.Return(builder);
         }
-    }
-
-    private static ReadOnlySequence<byte> SplitToSegments(int segments, ReadOnlySequenceBuilder<byte> sequenceBuilder,
-        ReadOnlyMemory<byte> utf8Json)
-    {
-        var segmentLength = utf8Json.Length / segments;
-
-        for (int i = segments - 2; i >= 0; i--)
-        {
-            sequenceBuilder.Add(utf8Json.Slice(0, segmentLength));
-
-            utf8Json = utf8Json.Slice(segmentLength);
-        }
-
-        sequenceBuilder.Add(utf8Json);
-
-        return sequenceBuilder.Build();
     }
 
     private static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> utf8Json, JsonSerializerOptions? options = null)

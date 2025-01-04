@@ -37,7 +37,7 @@ public class SequenceBase64JsonConverterBenchmark
         var dataBase64 = JsonSerializer.SerializeToUtf8Bytes(_data);
 
         _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
-        _dataBase64 = Split(dataBase64, Segments, _sequenceBuilder);
+        _dataBase64 = _sequenceBuilder.Add(dataBase64, Segments).Build();
     }
 
     [GlobalCleanup]
@@ -82,24 +82,5 @@ public class SequenceBase64JsonConverterBenchmark
     {
         var utf8Reader = new Utf8JsonReader(utf8Json);
         return JsonSerializer.Deserialize<TValue>(ref utf8Reader, options);
-    }
-
-    private static ReadOnlySequence<T> Split<T>(ReadOnlyMemory<T> memory, int segments,
-        ReadOnlySequenceBuilder<T> sequenceBuilder)
-    {
-        if (segments < 2) throw new ArgumentOutOfRangeException(nameof(segments));
-
-        var segmentLength = memory.Length / segments;
-
-        for (int i = segments - 2; i >= 0; i--)
-        {
-            sequenceBuilder.Add(memory.Slice(0, segmentLength));
-
-            memory = memory.Slice(segmentLength);
-        }
-
-        sequenceBuilder.Add(memory);
-
-        return sequenceBuilder.Build();
     }
 }
