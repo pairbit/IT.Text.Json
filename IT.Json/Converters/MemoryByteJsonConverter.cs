@@ -28,9 +28,16 @@ public class ArrayByteJsonConverter : JsonConverter<byte[]?>
 
 public class MemoryOwnerByteJsonConverter : JsonConverter<IMemoryOwner<byte>?>
 {
+    private readonly MemoryPool<byte> _pool;
+
+    public MemoryOwnerByteJsonConverter(MemoryPool<byte>? pool = null)
+    {
+        _pool = pool ?? MemoryPool<byte>.Shared;
+    }
+
     public override IMemoryOwner<byte>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return reader.GetMemoryOwnerFromBase64(MemoryPool<byte>.Shared);
+        return reader.GetMemoryOwnerFromBase64(_pool);
     }
 
     public override void Write(Utf8JsonWriter writer, IMemoryOwner<byte>? value, JsonSerializerOptions options)
