@@ -45,7 +45,11 @@ public class Base64JsonConverterBenchmark
     public byte[] Deserialize_Array_IT() => JsonSerializer.Deserialize<byte[]>(_dataBase64, _jso)!;
 
     [Benchmark]
-    public IMemoryOwner<byte> Deserialize_Owner_IT() => JsonSerializer.Deserialize<IMemoryOwner<byte>>(_dataBase64, _jso)!;
+    public void Deserialize_Owner_IT()
+    {
+        using var owner = JsonSerializer.Deserialize<IMemoryOwner<byte>>(_dataBase64, _jso)!;
+        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Owner_IT");
+    }
 
     public void Test()
     {
@@ -57,7 +61,6 @@ public class Base64JsonConverterBenchmark
         if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_Default");
         if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_IT");
 
-        using var owner = Deserialize_Owner_IT();
-        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Owner_IT");
+        Deserialize_Owner_IT();
     }
 }
