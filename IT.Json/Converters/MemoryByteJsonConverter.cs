@@ -1,5 +1,6 @@
 ﻿using IT.Json.Extensions;
 using System;
+using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,8 +8,6 @@ namespace IT.Json.Converters;
 
 public class ArrayByteJsonConverter : JsonConverter<byte[]?>
 {
-    public override bool HandleNull => true;
-
     public override byte[]? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         return reader.GetArrayFromBase64();
@@ -23,6 +22,26 @@ public class ArrayByteJsonConverter : JsonConverter<byte[]?>
         else
         {
             writer.WriteBase64StringValue(value);
+        }
+    }
+}
+
+public class MemoryOwnerByteJsonConverter : JsonConverter<IMemoryOwner<byte>?>
+{
+    public override IMemoryOwner<byte>? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        return reader.GetMemoryOwnerFromBase64(MemoryPool<byte>.Shared);
+    }
+
+    public override void Write(Utf8JsonWriter writer, IMemoryOwner<byte>? value, JsonSerializerOptions options)
+    {
+        if (value == null)
+        {
+            writer.WriteNullValue();
+        }
+        else
+        {
+            writer.WriteBase64StringValue(value.Memory.Span);
         }
     }
 }
