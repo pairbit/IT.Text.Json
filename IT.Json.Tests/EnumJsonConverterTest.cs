@@ -569,6 +569,9 @@ public class EnumJsonConverterTest
         Assert.That(Deserialize<EnumByteFlags>("\"twoo|five\"", jso),
             Is.EqualTo(EnumByteFlags.Two | EnumByteFlags.Five));
 
+        Assert.That(Deserialize<EnumByteFlags>("\"fiveo|two\"", jso),
+            Is.EqualTo(EnumByteFlags.Two | EnumByteFlags.Five));
+
         Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"two|five\"", jso))!.Message,
             Is.EqualTo(JsonNotMapped<EnumByteFlags>("tw").Message));
     }
