@@ -368,11 +368,12 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         if (seplenpart > 0)
         {
             nameLength += seplenpart;
-            if (nameLength <= maxNameLength)
-                xxhAlg.Append(sep.Slice(0, seplenpart));
+            if (nameLength > maxNameLength) goto invalid;
+            
+            xxhAlg.Append(sep.Slice(0, seplenpart));
         }
+        else if (nameLength > maxNameLength) goto invalid;
 
-        if (nameLength > maxNameLength) goto invalid;
         if (!xxhToNumber.TryGetValue(xxhAlg.HashToInt32(), out number)) goto invalid;
 
         numberValue |= number;
