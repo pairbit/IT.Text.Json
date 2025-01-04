@@ -17,9 +17,10 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequence<byte> _dataBase64;
     private static JsonSerializerOptions _jso = null!;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
-    private static readonly int SegmentsMax = 10;
 
     public int Length { get; set; } = 100;//1MB
+
+    public int Segments { get; set; } = 10;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -35,8 +36,8 @@ public class SequenceBase64JsonConverterBenchmark
 
         var dataBase64 = JsonSerializer.SerializeToUtf8Bytes(_data);
 
-        _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(SegmentsMax);
-        _dataBase64 = Split(dataBase64, SegmentsMax, _sequenceBuilder);
+        _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
+        _dataBase64 = Split(dataBase64, Segments, _sequenceBuilder);
     }
 
     [GlobalCleanup]
