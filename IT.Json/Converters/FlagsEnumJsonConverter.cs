@@ -3,7 +3,6 @@ using IT.Json.Internal;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
-
 #if NET8_0_OR_GREATER
 using System.Collections.Frozen;
 #endif
@@ -26,7 +25,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private static readonly DisabledJavaScriptEncoder _disabledEncoder = new();
     private const int MaxStackallocBytes = 256;
 
-    private readonly byte[] _sep;
+    private readonly JsonEncodedText _sep;
     private readonly int _maxLength;
     private readonly TNumber _maxNumber;
     private readonly (TNumber, JsonEncodedText)[] _numberUtf8Name;
@@ -53,10 +52,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     {
         if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
 
+        var sepEncoded = JsonEncodedText.Encode(sep, encoder);
+
         //TODO: возможно определить более эффективный размер??
         var sumNameLength = 0;
         TNumber maxNumber = default;
         var values = _values;
+        var valueToUtf8Name = _valueToUtf8Name;
         var numberUtf8Name = new (TNumber, JsonEncodedText)[values.Length];
         for (int i = 0; i < values.Length; i++)
         {
@@ -64,7 +66,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             TNumber number = Unsafe.As<TEnum, TNumber>(ref key);
             maxNumber |= number;
 
-            var utf8Name = _valueToUtf8Name[key];
+            var utf8Name = valueToUtf8Name[key];
             sumNameLength += utf8Name.EncodedUtf8Bytes.Length;
 
             numberUtf8Name[i] = (number, utf8Name);
@@ -83,9 +85,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             ;
         _maxNumber = maxNumber;
         _numberUtf8Name = numberUtf8Name;
-        _valuesToUtf8Name = new(_valueToUtf8Name);
-        _maxLength = sumNameLength + (sep.Length * (values.Length - 1));
-        _sep = sep;
+        _valuesToUtf8Name = new(valueToUtf8Name);
+        _maxLength = sumNameLength + (sepEncoded.EncodedUtf8Bytes.Length * (values.Length - 1));
+        _sep = sepEncoded;
     }
 
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -177,7 +179,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     {
         var length = utf8Value.Length;
         var start = length;
-        var sep = _sep;
+        var sep = _sep.EncodedUtf8Bytes;
         var numberUtf8Name = _numberUtf8Name;
         for (var i = numberUtf8Name.Length - 1; i >= 0; i--)
         {
@@ -209,7 +211,8 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
     private bool TryReadSpan(ReadOnlySpan<byte> span, out TEnum value, out ReadOnlySpan<byte> utf8Name)
     {
-        var index = span.IndexOf(_sep);
+        var sep = _sep.EncodedUtf8Bytes;
+        var index = span.IndexOf(sep);
         if (index == -1)
         {
             utf8Name = default;
@@ -219,7 +222,6 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         TNumber numberValue = default;
         TNumber number;
         var xxhToNumber = _xxhToNumber;
-        var sep = _sep;
         var seplen = sep.Length;
         var seed = _seed;
         var maxNameLength = _maxNameLength;
@@ -257,7 +259,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     {
         var xxhAlg = GetXXH();
         var xxhToNumber = _xxhToNumber;
-        ReadOnlySpan<byte> sep = _sep;
+        ReadOnlySpan<byte> sep = _sep.EncodedUtf8Bytes;
         var seplen = sep.Length;
         var seplenpart = 0;
         TNumber numberValue = default;
@@ -361,6 +363,13 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 xxhAlg.Append(span);
 
             //if (position.GetObject() == null) break;
+        }
+
+        if (seplenpart > 0)
+        {
+            nameLength += seplenpart;
+            if (nameLength <= maxNameLength)
+                xxhAlg.Append(sep.Slice(0, seplenpart));
         }
 
         if (nameLength > maxNameLength) goto invalid;

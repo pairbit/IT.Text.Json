@@ -472,6 +472,46 @@ public class EnumJsonConverterTest
     }
 
     [Test]
+    public void StrictEnum_Factory_SepEncoded_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase, jso.Encoder, sep: "\"|"u8.ToArray()));
+
+        Assert.That(Serialize(EnumByteFlags.Two | EnumByteFlags.Five, jso),
+            Is.EqualTo("\"two\\u0022|five\""));
+
+        Assert.That(Deserialize<EnumByteFlags>("\"two\\u0022|five\"", jso),
+            Is.EqualTo(EnumByteFlags.Two | EnumByteFlags.Five));
+
+        Assert.That(Serialize(EnumInt.x2 | EnumInt.x8, jso),
+            Is.EqualTo("\"22222222222222222222222222222222222222222\\u0022|8888888888888888888888888888888888888888888\""));
+
+        Assert.That(Serialize(EnumEscaped.Escaped, jso),
+            Is.EqualTo("\"\\u0022Escaped\\u0022\""));
+
+        Assert.That(Serialize(EnumEscaped.Escaped | EnumEscaped.Escaped2, jso),
+            Is.EqualTo("\"\\u0022Escaped\\u0022\\u0022|\\u0022Escaped__2\\u0022\""));
+
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped));
+
+        Assert.That(Deserialize<EnumEscaped>("\"\\u0022Escaped\\u0022\\u0022|\\u0022Escaped__2\\u0022\"", jso),
+            Is.EqualTo(EnumEscaped.Escaped | EnumEscaped.Escaped2));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one34\\u0022|two\"", jso))!.Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("one34").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one\\u0022|two444\"", jso))!.Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("two444").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one\\u0022|4445\\u0022|two\"", jso))!.Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("4445").Message));
+
+        Assert.That(Assert.Catch<JsonException>(() => Deserialize<EnumByteFlags>("\"one\\u0022|two\\u0022|sdf\"", jso))!.Message,
+            Is.EqualTo(JsonNotMapped<EnumByteFlags>("sdf").Message));
+    }
+
+    [Test]
     public void StrictEnum_Factory_Sep4_Test()
     {
         var jso = new JsonSerializerOptions();
