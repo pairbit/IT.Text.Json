@@ -17,9 +17,11 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequence<byte> _dataBase64;
     private static JsonSerializerOptions _jso = null!;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
-
+    
+    [Params(100)]
     public int Length { get; set; } = 100;//1MB
-
+    
+    [Params(10)]
     public int Segments { get; set; } = 10;
 
     [GlobalSetup]

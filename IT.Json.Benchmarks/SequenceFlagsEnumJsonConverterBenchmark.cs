@@ -4,6 +4,7 @@ using IT.Buffers;
 using IT.Buffers.Pool;
 using IT.Json.Converters;
 using System.Buffers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,15 +13,16 @@ namespace IT.Json.Benchmarks;
 [MemoryDiagnoser]
 [MinColumn, MaxColumn]
 [Orderer(SummaryOrderPolicy.FastestToSlowest, MethodOrderPolicy.Declared)]
-public class SequenceEnumJsonConverterBenchmark
+public class SequenceFlagsEnumJsonConverterBenchmark
 {
-    private static ReadOnlySequence<byte> _enumString;
+    private static EnumByteFlags _maxFlags;
+    private static ReadOnlySequence<byte> _maxFlagsSequence;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     private static JsonSerializerOptions _jso = null!;
     private static JsonSerializerOptions _jso_Strict = null!;
 
-    [Params(2)]
+    [Params(2, 4, 8)]
     public int Segments { get; set; } = 2;
 
     [GlobalSetup]
@@ -32,11 +34,13 @@ public class SequenceEnumJsonConverterBenchmark
         _jso_Strict = new JsonSerializerOptions();
         _jso_Strict.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
 
-        var enumString = JsonSerializer.SerializeToUtf8Bytes(EnumByte.Two, _jso);
+        _maxFlags = (EnumByteFlags)15;
+        var maxFlags = JsonSerializer.SerializeToUtf8Bytes(_maxFlags, _jso);
+        var maxFlagsString = Encoding.UTF8.GetString(maxFlags);
 
         _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
 
-        _enumString = _sequenceBuilder.Add(enumString, Segments).Build();
+        _maxFlagsSequence = _sequenceBuilder.Add(maxFlags, Segments).Build();
     }
 
     [GlobalCleanup]
@@ -46,17 +50,17 @@ public class SequenceEnumJsonConverterBenchmark
     }
 
     [Benchmark]
-    public EnumByte Deserialize_String() => Deserialize<EnumByte>(_enumString, _jso);
+    public EnumByteFlags Deserialize_String() => Deserialize<EnumByteFlags>(_maxFlagsSequence, _jso);
 
     [Benchmark]
-    public EnumByte Deserialize_Strict() => Deserialize<EnumByte>(_enumString, _jso_Strict);
+    public EnumByteFlags Deserialize_Strict() => Deserialize<EnumByteFlags>(_maxFlagsSequence, _jso_Strict);
 
     public void Test()
     {
         GlobalSetup();
 
-        if (Deserialize_String() != EnumByte.Two) throw new InvalidOperationException("Deserialize_String");
-        if (Deserialize_Strict() != EnumByte.Two) throw new InvalidOperationException("Deserialize_Strict");
+        if (Deserialize_String() != _maxFlags) throw new InvalidOperationException("Deserialize_String");
+        if (Deserialize_Strict() != _maxFlags) throw new InvalidOperationException("Deserialize_Strict");
     }
 
     private static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> utf8Json, JsonSerializerOptions? options = null)
