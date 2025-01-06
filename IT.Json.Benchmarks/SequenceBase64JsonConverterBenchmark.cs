@@ -21,7 +21,7 @@ public class SequenceBase64JsonConverterBenchmark
     [Params(100)]
     public int Length { get; set; } = 100;//1MB
     
-    [Params(10)]
+    [Params(1, 10)]
     public int Segments { get; set; } = 10;
 
     [GlobalSetup]

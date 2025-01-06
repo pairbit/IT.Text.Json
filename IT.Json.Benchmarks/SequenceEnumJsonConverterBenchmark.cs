@@ -20,7 +20,7 @@ public class SequenceEnumJsonConverterBenchmark
     private static JsonSerializerOptions _jso = null!;
     private static JsonSerializerOptions _jso_Strict = null!;
 
-    [Params(2)]
+    [Params(1, 2)]
     public int Segments { get; set; } = 2;
 
     [GlobalSetup]
