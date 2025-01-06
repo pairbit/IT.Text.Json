@@ -19,7 +19,6 @@ public enum EnumByte : byte
 public class EnumJsonConverterBenchmark
 {
     private static JsonSerializerOptions _jsoStringCamelCase = null!;
-    private static JsonSerializerOptions _jsoStringCamelCaseInteger = null!;
     private static JsonSerializerOptions _jsoStringCamelCaseStrict = null!;
 
     [GlobalSetup]
@@ -27,9 +26,6 @@ public class EnumJsonConverterBenchmark
     {
         _jsoStringCamelCase = new JsonSerializerOptions();
         _jsoStringCamelCase.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
-
-        _jsoStringCamelCaseInteger = new JsonSerializerOptions();
-        _jsoStringCamelCaseInteger.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
 
         _jsoStringCamelCaseStrict = new JsonSerializerOptions();
         _jsoStringCamelCaseStrict.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
