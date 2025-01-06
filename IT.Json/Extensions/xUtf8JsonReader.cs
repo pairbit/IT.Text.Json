@@ -32,17 +32,8 @@ public static class xUtf8JsonReader
             var owner = pool.Rent(maxLength);
             var decoded = owner.Memory.Span.Slice(0, maxLength);
 
-            var status = Base64.DecodeFromUtf8(utf8, decoded, out var consumed, out var written);
-            if (status != OperationStatus.Done)
-            {
-                if (status == OperationStatus.InvalidData)
-                    throw new FormatException("Not Base64");
+            DecodeSpan(utf8, decoded, out var consumed, out var written);
 
-                throw new InvalidOperationException($"OperationStatus is {status}");
-            }
-#if DEBUG
-            System.Diagnostics.Debug.Assert(consumed == utf8.Length);
-#endif
             return owner.Slice(0, written);
         }
     }
@@ -88,17 +79,8 @@ public static class xUtf8JsonReader
             var utf8 = reader.ValueSpan;
             Memory<byte> decoded = new byte[(utf8.Length >> 2) * 3];
 
-            var status = Base64.DecodeFromUtf8(utf8, decoded.Span, out var consumed, out var written);
-            if (status != System.Buffers.OperationStatus.Done)
-            {
-                if (status == System.Buffers.OperationStatus.InvalidData)
-                    throw new FormatException("Not Base64");
+            DecodeSpan(utf8, decoded.Span, out var consumed, out var written);
 
-                throw new InvalidOperationException($"OperationStatus is {status}");
-            }
-#if DEBUG
-            System.Diagnostics.Debug.Assert(consumed == utf8.Length);
-#endif
             return decoded.Slice(0, written);
         }
     }
@@ -123,32 +105,32 @@ public static class xUtf8JsonReader
             var utf8 = reader.ValueSpan;
             var decoded = new byte[((utf8.Length >> 2) * 3) - GetPaddingCount(utf8)];
 
-            var status = Base64.DecodeFromUtf8(utf8, decoded, out var consumed, out var written);
-            if (status != System.Buffers.OperationStatus.Done)
-            {
-                if (status == System.Buffers.OperationStatus.InvalidData)
-                    throw new FormatException("Not Base64");
-
-                throw new InvalidOperationException($"OperationStatus is {status}");
-            }
+            DecodeSpan(utf8, decoded, out var consumed, out var written);
 #if DEBUG
-            System.Diagnostics.Debug.Assert(consumed == utf8.Length);
             System.Diagnostics.Debug.Assert(written == decoded.Length);
 #endif
             return decoded;
         }
     }
 
+    private static void DecodeSpan(ReadOnlySpan<byte> utf8, Span<byte> bytes, out int consumed, out int written)
+    {
+        var status = Base64.DecodeFromUtf8(utf8, bytes, out consumed, out written);
+        if (status != OperationStatus.Done)
+        {
+            if (status == OperationStatus.InvalidData)
+                throw new FormatException("Not Base64");
+
+            throw new InvalidOperationException($"OperationStatus is {status}");
+        }
+#if DEBUG
+        System.Diagnostics.Debug.Assert(consumed == utf8.Length);
+#endif
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetPaddingCount(ReadOnlySpan<byte> base64)
-    {
-        if (base64[^1] == Pad)
-        {
-            return base64[^2] == Pad ? 2 : 1;
-        }
-
-        return 0;
-    }
+        => base64[^1] == Pad ? base64[^2] == Pad ? 2 : 1 : 0;
 
     private static IMemoryOwner<byte> Slice(this IMemoryOwner<byte> memoryOwner, int start, int length)
     {
