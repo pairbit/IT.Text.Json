@@ -20,7 +20,7 @@ public class SequenceFlagsEnumJsonConverterBenchmark
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     private static JsonSerializerOptions _jso = null!;
-    private static JsonSerializerOptions _jso_Strict = null!;
+    private static JsonSerializerOptions _jso_IT = null!;
 
     [Params(1, 2, 4, 8, 10)]
     public int Segments { get; set; } = 2;
@@ -31,8 +31,8 @@ public class SequenceFlagsEnumJsonConverterBenchmark
         _jso = new JsonSerializerOptions();
         _jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
 
-        _jso_Strict = new JsonSerializerOptions();
-        _jso_Strict.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
+        _jso_IT = new JsonSerializerOptions();
+        _jso_IT.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
 
         _maxFlags = (EnumByteFlags)15;
         var maxFlags = JsonSerializer.SerializeToUtf8Bytes(_maxFlags, _jso);
@@ -53,14 +53,14 @@ public class SequenceFlagsEnumJsonConverterBenchmark
     public EnumByteFlags Deserialize_String() => Deserialize<EnumByteFlags>(_maxFlagsSequence, _jso);
 
     [Benchmark]
-    public EnumByteFlags Deserialize_Strict() => Deserialize<EnumByteFlags>(_maxFlagsSequence, _jso_Strict);
+    public EnumByteFlags Deserialize_IT() => Deserialize<EnumByteFlags>(_maxFlagsSequence, _jso_IT);
 
     public void Test()
     {
         GlobalSetup();
 
-        if (Deserialize_String() != _maxFlags) throw new InvalidOperationException("Deserialize_String");
-        if (Deserialize_Strict() != _maxFlags) throw new InvalidOperationException("Deserialize_Strict");
+        if (Deserialize_String() != _maxFlags) throw new InvalidOperationException(nameof(Deserialize_String));
+        if (Deserialize_IT() != _maxFlags) throw new InvalidOperationException(nameof(Deserialize_IT));
     }
 
     private static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> utf8Json, JsonSerializerOptions? options = null)

@@ -14,11 +14,12 @@ namespace IT.Json.Benchmarks;
 [Orderer(SummaryOrderPolicy.FastestToSlowest, MethodOrderPolicy.Declared)]
 public class SequenceEnumJsonConverterBenchmark
 {
+    private static EnumByte _enumValue;
     private static ReadOnlySequence<byte> _enumString;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     private static JsonSerializerOptions _jso = null!;
-    private static JsonSerializerOptions _jso_Strict = null!;
+    private static JsonSerializerOptions _jso_IT = null!;
 
     [Params(1, 2)]
     public int Segments { get; set; } = 2;
@@ -29,10 +30,11 @@ public class SequenceEnumJsonConverterBenchmark
         _jso = new JsonSerializerOptions();
         _jso.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
 
-        _jso_Strict = new JsonSerializerOptions();
-        _jso_Strict.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
+        _jso_IT = new JsonSerializerOptions();
+        _jso_IT.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
 
-        var enumString = JsonSerializer.SerializeToUtf8Bytes(EnumByte.Two, _jso);
+        _enumValue = EnumByte.TwoTwoTwo;
+        var enumString = JsonSerializer.SerializeToUtf8Bytes(_enumValue, _jso);
 
         _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
 
@@ -49,14 +51,14 @@ public class SequenceEnumJsonConverterBenchmark
     public EnumByte Deserialize_String() => Deserialize<EnumByte>(_enumString, _jso);
 
     [Benchmark]
-    public EnumByte Deserialize_Strict() => Deserialize<EnumByte>(_enumString, _jso_Strict);
+    public EnumByte Deserialize_IT() => Deserialize<EnumByte>(_enumString, _jso_IT);
 
     public void Test()
     {
         GlobalSetup();
 
-        if (Deserialize_String() != EnumByte.Two) throw new InvalidOperationException("Deserialize_String");
-        if (Deserialize_Strict() != EnumByte.Two) throw new InvalidOperationException("Deserialize_Strict");
+        if (Deserialize_String() != _enumValue) throw new InvalidOperationException(nameof(Deserialize_String));
+        if (Deserialize_IT() != _enumValue) throw new InvalidOperationException(nameof(Deserialize_IT));
     }
 
     private static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> utf8Json, JsonSerializerOptions? options = null)

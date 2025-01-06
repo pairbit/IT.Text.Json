@@ -72,6 +72,6 @@ public class FlagsEnumJsonConverterBenchmark
 
         if (Deserialize_Number() != _maxFlags) throw new InvalidOperationException("Deserialize_Number");
         if (Deserialize_String() != _maxFlags) throw new InvalidOperationException("Deserialize_String");
-        if (Deserialize_Strict() != _maxFlags) throw new InvalidOperationException("Deserialize_Strict");
+        if (Deserialize_Strict() != _maxFlags) throw new InvalidOperationException("Deserialize_IT");
     }
 }
