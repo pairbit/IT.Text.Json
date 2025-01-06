@@ -126,7 +126,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             }
             else
             {
-                return TryReadSequence(sequence, out var value) ? value : throw NotMapped(reader.GetString());
+                return TryReadSequence(in sequence, out var value) ? value : throw NotMapped(reader.GetString());
             }
         }
         else
@@ -167,7 +167,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         return xxh;
     }
 
-    protected bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value)
+    protected bool TryReadSequence(in ReadOnlySequence<byte> sequence, out TEnum value)
     {
         var xxhAlg = GetXXH();
         var position = sequence.Start;

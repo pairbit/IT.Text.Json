@@ -102,7 +102,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
             else
             {
-                return TryReadSequence(sequence, out var value, out var utf8Name) ? value : throw NotMappedUtf8(utf8Name);
+                return TryReadSequence(in sequence, out var value, out var utf8Name) ? value : throw NotMappedUtf8(utf8Name);
             }
         }
         else
@@ -255,7 +255,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         return false;
     }
 
-    private bool TryReadSequence(ReadOnlySequence<byte> sequence, out TEnum value, out ReadOnlySequence<byte> utf8Name)
+    private bool TryReadSequence(in ReadOnlySequence<byte> sequence, out TEnum value, out ReadOnlySequence<byte> utf8Name)
     {
         var xxhAlg = GetXXH();
         var xxhToNumber = _xxhToNumber;
