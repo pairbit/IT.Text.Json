@@ -15,7 +15,7 @@ public class Base64JsonConverterBenchmark
     private static byte[] _dataBase64 = null!;
     private static JsonSerializerOptions _jso = null!;
 
-    [Params(1024 * 1024)]
+    [Params(1024, 1024 * 1024)]
     public int Length { get; set; } = 1024 * 1024;//1MB
 
     [GlobalSetup]
