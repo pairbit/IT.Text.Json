@@ -19,9 +19,9 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     [Params(1024, 1024 * 1024)]
-    public int Length { get; set; } = 1024;
+    public int Length { get; set; } = 4;
 
-    [Params(1, 10)]
+    [Params(1, 2, 10)]
     public int Segments { get; set; } = 10;
 
     [GlobalSetup]
@@ -57,8 +57,8 @@ public class SequenceBase64JsonConverterBenchmark
     [Benchmark]
     public byte[] Deserialize_Array_Default() => Deserialize<byte[]>(_dataBase64)!;
 
-    //[Benchmark]
-    //public byte[] Deserialize_Array_IT() => Deserialize<byte[]>(_dataBase64, _jso)!;
+    [Benchmark]
+    public byte[] Deserialize_Array_IT() => Deserialize<byte[]>(_dataBase64, _jso)!;
 
     [Benchmark]
     public void Deserialize_Owner_IT()
@@ -75,7 +75,7 @@ public class SequenceBase64JsonConverterBenchmark
         if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_IT));
 
         if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_Default));
-        //if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_IT));
+        if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_IT));
 
         Deserialize_Owner_IT();
     }

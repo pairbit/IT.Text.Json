@@ -102,10 +102,12 @@ public static class xUtf8JsonReader
         else if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
-            var decoded = new byte[((seq.Length >> 2) * 3) - GetPaddingCount(in seq)];
+            var length = seq.Length;
+            var decoded = new byte[((seq.Length >> 2) * 3) - GetPaddingCount(in seq, length)];
 
-            DecodeSequence(seq, decoded, out _, out var written);
+            DecodeSequence(seq, decoded, out var consumed, out var written);
 #if DEBUG
+            System.Diagnostics.Debug.Assert(consumed == length);
             System.Diagnostics.Debug.Assert(written == decoded.Length);
 #endif
             return decoded;
@@ -230,9 +232,20 @@ public static class xUtf8JsonReader
         => base64[^1] == Pad ? base64[^2] == Pad ? 2 : 1 : 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetPaddingCount(in ReadOnlySequence<byte> sequence)
+    private static int GetPaddingCount(in ReadOnlySequence<byte> sequence, long length)
     {
-        //sequence.GetPosition()
+        var end = sequence.Slice(length - 2);
+        var span = end.FirstSpan;
+        if (span.Length == 2) return GetPaddingCount(span);
+
+        if (span.Length == 1)
+        {
+            if (span[0] == Pad) return 2;
+
+            end = sequence.Slice(length - 1);
+            return end.FirstSpan[0] == Pad ? 1 : 0;
+        }
+
         throw new NotImplementedException();
     }
 
