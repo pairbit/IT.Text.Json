@@ -143,24 +143,24 @@ public static class xUtf8JsonReader
             sequence = sequence.Slice(bytesConsumed);
             bytes = bytes.Slice(bytesWritten);
 
-            int remaining = firstSpan.Length - bytesConsumed;
-#if DEBUG
-            System.Diagnostics.Debug.Assert(remaining < 4);
-#endif
-            // If there are less than 4 elements remaining in this span, process them separately
-            // For System.IO.Pipelines this code-path won't be hit, as the default sizes for
-            // MinimumSegmentSize are a (higher) power of 2, so are multiples of 4, hence
-            // for base64 it is valid or invalid data.
-            // Here it is kept to be on the safe side, if non-stanard ROS should be processed.
-            if (remaining > 0)
+            if (status == OperationStatus.NeedMoreData)
             {
-                DecodeRemaining(
-                    ref sequence,
-                    bytes,
-                    remaining,
-                    ref isFinalSegment,
-                    out bytesConsumed,
-                    out bytesWritten);
+                int remaining = firstSpan.Length - bytesConsumed;
+#if DEBUG
+                System.Diagnostics.Debug.Assert(remaining > 0 && remaining < 4);
+#endif
+                // If there are less than 4 elements remaining in this span, process them separately
+                // For System.IO.Pipelines this code-path won't be hit, as the default sizes for
+                // MinimumSegmentSize are a (higher) power of 2, so are multiples of 4, hence
+                // for base64 it is valid or invalid data.
+                // Here it is kept to be on the safe side, if non-stanard ROS should be processed.
+                DecodeSequenceRemaining(
+                        ref sequence,
+                        bytes,
+                        remaining,
+                        ref isFinalSegment,
+                        out bytesConsumed,
+                        out bytesWritten);
 
                 consumed += bytesConsumed;
                 written += bytesWritten;
@@ -171,7 +171,7 @@ public static class xUtf8JsonReader
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void DecodeRemaining(
+    private static void DecodeSequenceRemaining(
         ref ReadOnlySequence<byte> base64,
         Span<byte> bytes,
         int remaining,
@@ -203,8 +203,7 @@ public static class xUtf8JsonReader
         }
 
         var status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinalSegment);
-        if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
-        if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
+        if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
 #if DEBUG
         System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
         System.Diagnostics.Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
