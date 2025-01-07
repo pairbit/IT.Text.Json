@@ -20,10 +20,15 @@ public static class xUtf8JsonReader
         else if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
-            //Memory<byte> decoded = new byte[(seq.Length >> 2) * 3];
+            var maxLengthLong = (seq.Length >> 2) * 3;
+            if (maxLengthLong > int.MaxValue) throw new JsonException("too long");
+            var maxLength = (int)maxLengthLong;
+            var owner = pool.Rent(maxLength);
+            var decoded = owner.Memory.Span.Slice(0, maxLength);
 
-            //Base64.DecodeFromUtf8()
-            throw new NotImplementedException();
+            DecodeSequence(seq, decoded, out _, out var written);
+
+            return owner.Slice(0, written);
         }
         else
         {
@@ -32,7 +37,7 @@ public static class xUtf8JsonReader
             var owner = pool.Rent(maxLength);
             var decoded = owner.Memory.Span.Slice(0, maxLength);
 
-            DecodeSpan(utf8, decoded, out var consumed, out var written);
+            DecodeSpan(utf8, decoded, out _, out var written);
 
             return owner.Slice(0, written);
         }
@@ -71,15 +76,16 @@ public static class xUtf8JsonReader
             var seq = reader.ValueSequence;
             Memory<byte> decoded = new byte[(seq.Length >> 2) * 3];
 
-            //Base64.DecodeFromUtf8()
-            throw new NotImplementedException();
+            DecodeSequence(seq, decoded.Span, out _, out var written);
+
+            return decoded.Slice(0, written);
         }
         else
         {
             var utf8 = reader.ValueSpan;
             Memory<byte> decoded = new byte[(utf8.Length >> 2) * 3];
 
-            DecodeSpan(utf8, decoded.Span, out var consumed, out var written);
+            DecodeSpan(utf8, decoded.Span, out _, out var written);
 
             return decoded.Slice(0, written);
         }
@@ -96,21 +102,113 @@ public static class xUtf8JsonReader
         else if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
+            var decoded = new byte[((seq.Length >> 2) * 3) - GetPaddingCount(in seq)];
 
-            //Base64.DecodeFromUtf8()
-            throw new NotImplementedException();
+            DecodeSequence(seq, decoded, out _, out var written);
+#if DEBUG
+            System.Diagnostics.Debug.Assert(written == decoded.Length);
+#endif
+            return decoded;
         }
         else
         {
             var utf8 = reader.ValueSpan;
             var decoded = new byte[((utf8.Length >> 2) * 3) - GetPaddingCount(utf8)];
 
-            DecodeSpan(utf8, decoded, out var consumed, out var written);
+            DecodeSpan(utf8, decoded, out _, out var written);
 #if DEBUG
             System.Diagnostics.Debug.Assert(written == decoded.Length);
 #endif
             return decoded;
         }
+    }
+
+    private static void DecodeSequence(ReadOnlySequence<byte> sequence, Span<byte> bytes, out int consumed, out int written)
+    {
+        bool isFinalSegment;
+        consumed = written = 0;
+
+        do
+        {
+            isFinalSegment = sequence.IsSingleSegment;
+            ReadOnlySpan<byte> firstSpan = sequence.FirstSpan;
+
+            var status = Base64.DecodeFromUtf8(firstSpan, bytes, out var bytesConsumed, out var bytesWritten, isFinalSegment);
+            if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
+            if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
+
+            consumed += bytesConsumed;
+            written += bytesWritten;
+
+            sequence = sequence.Slice(bytesConsumed);
+            bytes = bytes.Slice(bytesWritten);
+
+            int remaining = firstSpan.Length - bytesConsumed;
+#if DEBUG
+            System.Diagnostics.Debug.Assert(remaining < 4);
+#endif
+            // If there are less than 4 elements remaining in this span, process them separately
+            // For System.IO.Pipelines this code-path won't be hit, as the default sizes for
+            // MinimumSegmentSize are a (higher) power of 2, so are multiples of 4, hence
+            // for base64 it is valid or invalid data.
+            // Here it is kept to be on the safe side, if non-stanard ROS should be processed.
+            if (remaining > 0)
+            {
+                DecodeRemaining(
+                    ref sequence,
+                    bytes,
+                    remaining,
+                    ref isFinalSegment,
+                    out bytesConsumed,
+                    out bytesWritten);
+
+                consumed += bytesConsumed;
+                written += bytesWritten;
+
+                bytes = bytes.Slice(bytesWritten);
+            }
+        } while (!isFinalSegment);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void DecodeRemaining(
+        ref ReadOnlySequence<byte> base64,
+        Span<byte> bytes,
+        int remaining,
+        ref bool isFinalSegment,
+        out int bytesConsumed,
+        out int bytesWritten)
+    {
+        System.Diagnostics.Debug.Assert(!isFinalSegment);
+
+        ReadOnlySpan<byte> firstSpan = base64.FirstSpan;
+        Span<byte> tmpBuffer = stackalloc byte[4];
+        firstSpan[^remaining..].CopyTo(tmpBuffer);
+
+        int base64Needed = tmpBuffer.Length - remaining;
+        Span<byte> tmpBufferRemaining = tmpBuffer[remaining..];
+        base64 = base64.Slice(remaining);
+        firstSpan = base64.FirstSpan;
+
+        if (firstSpan.Length > base64Needed)
+        {
+            firstSpan[0..base64Needed].CopyTo(tmpBufferRemaining);
+            base64 = base64.Slice(base64Needed);
+        }
+        else
+        {
+            firstSpan.CopyTo(tmpBufferRemaining);
+            isFinalSegment = true;
+            System.Diagnostics.Debug.Assert(tmpBuffer.Length == remaining + firstSpan.Length);
+        }
+
+        var status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinalSegment);
+        if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
+        if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
+#if DEBUG
+        System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
+        System.Diagnostics.Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
+#endif
     }
 
     private static void DecodeSpan(ReadOnlySpan<byte> utf8, Span<byte> bytes, out int consumed, out int written)
@@ -131,6 +229,13 @@ public static class xUtf8JsonReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static int GetPaddingCount(ReadOnlySpan<byte> base64)
         => base64[^1] == Pad ? base64[^2] == Pad ? 2 : 1 : 0;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetPaddingCount(in ReadOnlySequence<byte> sequence)
+    {
+        //sequence.GetPosition()
+        throw new NotImplementedException();
+    }
 
     private static IMemoryOwner<byte> Slice(this IMemoryOwner<byte> memoryOwner, int start, int length)
     {
