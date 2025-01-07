@@ -17,10 +17,10 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequence<byte> _dataBase64;
     private static JsonSerializerOptions _jso = null!;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
-    
+
     [Params(100)]
-    public int Length { get; set; } = 100;//1MB
-    
+    public int Length { get; set; } = 100;
+
     [Params(1, 10)]
     public int Segments { get; set; } = 10;
 
@@ -64,18 +64,18 @@ public class SequenceBase64JsonConverterBenchmark
     public void Deserialize_Owner_IT()
     {
         using var owner = Deserialize<IMemoryOwner<byte>>(_dataBase64, _jso)!;
-        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Owner_IT");
+        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Owner_IT));
     }
 
     public void Test()
     {
         GlobalSetup();
 
-        if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Memory_Default");
-        if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Memory_IT");
+        if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_Default));
+        if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_IT));
 
-        if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_Default");
-        if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_IT");
+        if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_Default));
+        if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_IT));
 
         Deserialize_Owner_IT();
     }

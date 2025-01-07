@@ -15,7 +15,8 @@ public class Base64JsonConverterBenchmark
     private static byte[] _dataBase64 = null!;
     private static JsonSerializerOptions _jso = null!;
 
-    public int Length { get; set; } = 1024*1024;//1MB
+    [Params(1024 * 1024)]
+    public int Length { get; set; } = 1024 * 1024;//1MB
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -34,7 +35,7 @@ public class Base64JsonConverterBenchmark
 
     [Benchmark]
     public Memory<byte> Deserialize_Memory_Default() => JsonSerializer.Deserialize<Memory<byte>>(_dataBase64);
-    
+
     [Benchmark]
     public Memory<byte> Deserialize_Memory_IT() => JsonSerializer.Deserialize<Memory<byte>>(_dataBase64, _jso);
 
@@ -48,18 +49,18 @@ public class Base64JsonConverterBenchmark
     public void Deserialize_Owner_IT()
     {
         using var owner = JsonSerializer.Deserialize<IMemoryOwner<byte>>(_dataBase64, _jso)!;
-        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Owner_IT");
+        if (!owner.Memory.Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Owner_IT));
     }
 
     public void Test()
     {
         GlobalSetup();
 
-        if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Memory_Default");
-        if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Memory_IT");
-        
-        if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_Default");
-        if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException("Deserialize_Array_IT");
+        if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_Default));
+        if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_IT));
+
+        if (!Deserialize_Array_Default().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_Default));
+        if (!Deserialize_Array_IT().SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Array_IT));
 
         Deserialize_Owner_IT();
     }
