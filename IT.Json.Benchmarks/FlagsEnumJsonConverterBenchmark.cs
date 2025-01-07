@@ -22,6 +22,7 @@ public enum EnumByteFlags : byte
 public class FlagsEnumJsonConverterBenchmark
 {
     private static EnumByteFlags _maxFlags;
+    private static byte[] _maxFlagsNumber = null!;
     private static byte[] _maxFlagsString = null!;
 
     private static JsonSerializerOptions _jso = null!;
@@ -37,6 +38,7 @@ public class FlagsEnumJsonConverterBenchmark
         _jso_IT.Converters.Add(new EnumJsonConverterFactory(JsonNamingPolicy.CamelCase));
 
         _maxFlags = (EnumByteFlags)15;
+        _maxFlagsNumber = Serialize_Number();
         _maxFlagsString = Serialize_String();
     }
 
@@ -50,7 +52,7 @@ public class FlagsEnumJsonConverterBenchmark
     public byte[] Serialize_IT() => JsonSerializer.SerializeToUtf8Bytes(_maxFlags, _jso_IT);
 
     [Benchmark]
-    public EnumByteFlags Deserialize_Number() => JsonSerializer.Deserialize<EnumByteFlags>("15"u8);
+    public EnumByteFlags Deserialize_Number() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsNumber);
 
     [Benchmark]
     public EnumByteFlags Deserialize_String() => JsonSerializer.Deserialize<EnumByteFlags>(_maxFlagsString, _jso);
@@ -62,7 +64,7 @@ public class FlagsEnumJsonConverterBenchmark
     {
         GlobalSetup();
 
-        if (!Serialize_Number().AsSpan().SequenceEqual("15"u8)) throw new InvalidOperationException(nameof(Serialize_Number));
+        if (!Serialize_Number().AsSpan().SequenceEqual(_maxFlagsNumber)) throw new InvalidOperationException(nameof(Serialize_Number));
         if (!Serialize_String().AsSpan().SequenceEqual(_maxFlagsString)) throw new InvalidOperationException(nameof(Serialize_String));
         if (!Serialize_IT().AsSpan().SequenceEqual(_maxFlagsString)) throw new InvalidOperationException(nameof(Serialize_IT));
 

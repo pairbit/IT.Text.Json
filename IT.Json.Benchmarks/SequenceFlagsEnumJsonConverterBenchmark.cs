@@ -4,7 +4,6 @@ using IT.Buffers;
 using IT.Buffers.Pool;
 using IT.Json.Converters;
 using System.Buffers;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -36,7 +35,7 @@ public class SequenceFlagsEnumJsonConverterBenchmark
 
         _maxFlags = (EnumByteFlags)15;
         var maxFlags = JsonSerializer.SerializeToUtf8Bytes(_maxFlags, _jso);
-        var maxFlagsString = Encoding.UTF8.GetString(maxFlags);
+        //var maxFlagsString = Encoding.UTF8.GetString(maxFlags);
 
         _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
 
