@@ -18,8 +18,8 @@ public class SequenceBase64JsonConverterBenchmark
     private static JsonSerializerOptions _jso = null!;
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
-    [Params(100)]
-    public int Length { get; set; } = 100;
+    [Params(1024, 1024 * 1024)]
+    public int Length { get; set; } = 1024;
 
     [Params(1, 10)]
     public int Segments { get; set; } = 10;
