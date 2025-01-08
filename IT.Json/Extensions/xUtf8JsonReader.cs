@@ -132,22 +132,19 @@ public static class xUtf8JsonReader
         var position = sequence.Start;
         Span<byte> tmpBuffer = stackalloc byte[4];
         OperationStatus status;
-        bool isFinal = false;
         while (sequence.TryGet(ref position, out var memory))
         {
             var length = memory.Length;
             if (length == 0) continue;
 
-            if (isFinal) throw new InvalidOperationException("InvalidData");
             var span = memory.Span;
 
-            isFinal = position.GetObject() == null;
             if (remaining > 0)
             {
                 var need = 4 - remaining;
                 if (length < need)
                 {
-                    if (isFinal) throw new InvalidOperationException("InvalidData");
+                    if (position.GetObject() == null) throw new InvalidOperationException("InvalidData");
                     span.CopyTo(tmpBuffer[remaining..]);
                     remaining += length;
                     continue;
@@ -155,9 +152,8 @@ public static class xUtf8JsonReader
 
                 span[..need].CopyTo(tmpBuffer[remaining..]);
                 remaining = 0;
-                if (!isFinal && tmpBuffer[3] == Pad) isFinal = true;
 
-                status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinal);
+                status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten);
                 if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
 #if DEBUG
                 System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
@@ -172,15 +168,13 @@ public static class xUtf8JsonReader
                 if (length == 0) continue;
             }
 
-            if (!isFinal && length % 4 == 0 && span[^1] == Pad) isFinal = true;
-            status = Base64.DecodeFromUtf8(span, bytes, out bytesConsumed, out bytesWritten, isFinal);
-            if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
-            if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
-            if (status == OperationStatus.NeedMoreData)
+            status = Base64.DecodeFromUtf8(span[..(length & ~0x3)], bytes, out bytesConsumed, out bytesWritten);
+            if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
+            remaining = length - bytesConsumed;
+            if (remaining > 0)
             {
-                remaining = length - bytesConsumed;
 #if DEBUG
-                System.Diagnostics.Debug.Assert(remaining > 0 && remaining < 4);
+                System.Diagnostics.Debug.Assert(remaining < 4);
 #endif
                 span[bytesConsumed..].CopyTo(tmpBuffer);
             }
