@@ -172,7 +172,7 @@ public static class xUtf8JsonReader
                 if (length == 0) continue;
             }
 
-            if (!isFinal && span[^1] == Pad) isFinal = true;
+            if (!isFinal && length % 4 == 0 && span[^1] == Pad) isFinal = true;
             status = Base64.DecodeFromUtf8(span, bytes, out bytesConsumed, out bytesWritten, isFinal);
             if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
             if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
@@ -191,6 +191,7 @@ public static class xUtf8JsonReader
 
         if (remaining > 0) throw new InvalidOperationException("InvalidData");
     }
+
     private static void DecodeSpan(ReadOnlySpan<byte> utf8, Span<byte> bytes, out int consumed, out int written)
     {
         var status = Base64.DecodeFromUtf8(utf8, bytes, out consumed, out written);

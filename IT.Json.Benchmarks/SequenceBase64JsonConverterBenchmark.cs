@@ -19,10 +19,10 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     [Params(1024, 1024 * 1024)]
-    public int Length { get; set; } = 5;
+    public int Length { get; set; } = 4;
 
     [Params(1, 2, 10)]
-    public int Segments { get; set; } = 2;
+    public int Segments { get; set; } = 1;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -39,7 +39,7 @@ public class SequenceBase64JsonConverterBenchmark
         var dataBase64 = JsonSerializer.SerializeToUtf8Bytes(_data);
 
         _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
-        _dataBase64 = _sequenceBuilder.Add(dataBase64.AsMemory()[..^1], Segments).Add(dataBase64.AsMemory()[^1..]).Build();
+        _dataBase64 = _sequenceBuilder.Add(dataBase64.AsMemory()[..^2], Segments).Add(dataBase64.AsMemory()[^2..]).Build();
     }
 
     [GlobalCleanup]
