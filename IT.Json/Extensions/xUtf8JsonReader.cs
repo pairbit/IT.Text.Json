@@ -24,6 +24,8 @@ public static class xUtf8JsonReader
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
+            if (length % 4 != 0) throw InvalidLength();
+
             var maxLength = (length >> 2) * 3;
             var owner = pool.Rent(maxLength);
 
@@ -36,6 +38,7 @@ public static class xUtf8JsonReader
             var span = reader.ValueSpan;
             var length = span.Length;
             if (length > maxEncodedLength) throw TooLong();
+            if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
             var owner = pool.Rent(maxLength);
@@ -60,6 +63,8 @@ public static class xUtf8JsonReader
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
+            if (length % 4 != 0) throw InvalidLength();
+
             Memory<byte> decoded = new byte[(length >> 2) * 3];
 
             DecodeSequence(seq, decoded.Span, out _, out var written);
@@ -71,6 +76,7 @@ public static class xUtf8JsonReader
             var span = reader.ValueSpan;
             var length = span.Length;
             if (length > maxEncodedLength) throw TooLong();
+            if (length % 4 != 0) throw InvalidLength();
 
             Memory<byte> decoded = new byte[(length >> 2) * 3];
 
@@ -94,6 +100,8 @@ public static class xUtf8JsonReader
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
+            if (length % 4 != 0) throw InvalidLength();
+
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(in seq, seq.GetPosition(length - 2))];
 
             DecodeSequence(seq, decoded, out var consumed, out var written);
@@ -108,6 +116,7 @@ public static class xUtf8JsonReader
             var span = reader.ValueSpan;
             var length = span.Length;
             if (length > maxEncodedLength) throw TooLong();
+            if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(span)];
 
@@ -228,6 +237,8 @@ public static class xUtf8JsonReader
     private static JsonException NotString() => new("Expected string");
 
     private static JsonException TooLong() => new("Base64 too long");
+
+    private static JsonException InvalidLength() => new("Base64 length is invalid");
 
     private static JsonException EscapingNotSupported() => new("Base64 escaping is not supported");
 
