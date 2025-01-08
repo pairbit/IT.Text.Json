@@ -10,99 +10,90 @@ public static class xUtf8JsonReader
 {
     private const byte Pad = (byte)'=';
 
-    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, MemoryPool<byte> pool)
+    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, MemoryPool<byte> pool)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
-        if (tokenType != JsonTokenType.String) throw new JsonException("Expected string");
+        if (tokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw EscapingNotSupported();
 
-        if (reader.ValueIsEscaped) throw new NotSupportedException("Base64 escaping is not supported");
-        else if (reader.HasValueSequence)
+        if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
-            var maxLengthLong = (seq.Length >> 2) * 3;
-            if (maxLengthLong > int.MaxValue) throw new JsonException("too long");
-            var maxLength = (int)maxLengthLong;
-            var owner = pool.Rent(maxLength);
-            var decoded = owner.Memory.Span.Slice(0, maxLength);
+            var longLength = seq.Length;
+            if (longLength > maxEncodedLength) throw TooLong();
 
-            DecodeSequence(seq, decoded, out _, out var written);
+            var length = (int)longLength;
+            var maxLength = (length >> 2) * 3;
+            var owner = pool.Rent(maxLength);
+
+            DecodeSequence(seq, owner.Memory.Span[..maxLength], out _, out var written);
 
             return owner.Slice(0, written);
         }
         else
         {
-            var utf8 = reader.ValueSpan;
-            var maxLength = (utf8.Length >> 2) * 3;
-            var owner = pool.Rent(maxLength);
-            var decoded = owner.Memory.Span.Slice(0, maxLength);
+            var span = reader.ValueSpan;
+            var length = span.Length;
+            if (length > maxEncodedLength) throw TooLong();
 
-            DecodeSpan(utf8, decoded, out _, out var written);
+            var maxLength = (length >> 2) * 3;
+            var owner = pool.Rent(maxLength);
+
+            DecodeSpan(span, owner.Memory.Span[..maxLength], out _, out var written);
 
             return owner.Slice(0, written);
         }
     }
 
-    public static Memory<byte> GetMemoryFromBase64(this ref Utf8JsonReader reader)
+    public static Memory<byte> GetMemoryFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
-        if (tokenType != JsonTokenType.String) throw new JsonException("Expected string");
+        if (tokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw EscapingNotSupported();
 
-        if (reader.ValueIsEscaped) throw new NotSupportedException("Base64 escaping is not supported");
-        //{
-        //    var length = reader.HasValueSequence ? reader.ValueSequence.Length : reader.ValueSpan.Length;
-        //    if (length == 0) return default;
-
-        //    Memory<byte> memory = new byte[length];
-
-        //    var span = memory.Span;
-
-        //    var written = reader.CopyString(span);
-
-        //    var status = Base64.DecodeFromUtf8InPlace(span.Slice(0, written), out written);
-        //    if (status != System.Buffers.OperationStatus.Done)
-        //    {
-        //        if (status == System.Buffers.OperationStatus.InvalidData)
-        //            throw new FormatException("Not Base64");
-
-        //        throw new InvalidOperationException($"OperationStatus is {status}");
-        //    }
-
-        //    return memory.Slice(0, written);
-        //}
-        else if (reader.HasValueSequence)
+        if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
-            Memory<byte> decoded = new byte[(seq.Length >> 2) * 3];
+            var longLength = seq.Length;
+            if (longLength > maxEncodedLength) throw TooLong();
+
+            var length = (int)longLength;
+            Memory<byte> decoded = new byte[(length >> 2) * 3];
 
             DecodeSequence(seq, decoded.Span, out _, out var written);
 
-            return decoded.Slice(0, written);
+            return decoded[..written];
         }
         else
         {
-            var utf8 = reader.ValueSpan;
-            Memory<byte> decoded = new byte[(utf8.Length >> 2) * 3];
+            var span = reader.ValueSpan;
+            var length = span.Length;
+            if (length > maxEncodedLength) throw TooLong();
 
-            DecodeSpan(utf8, decoded.Span, out _, out var written);
+            Memory<byte> decoded = new byte[(length >> 2) * 3];
 
-            return decoded.Slice(0, written);
+            DecodeSpan(span, decoded.Span, out _, out var written);
+
+            return decoded[..written];
         }
     }
 
-    public static byte[]? GetArrayFromBase64(this ref Utf8JsonReader reader)
+    public static byte[]? GetArrayFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
-        if (tokenType != JsonTokenType.String) throw new JsonException("Expected string");
+        if (tokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw EscapingNotSupported();
 
-        if (reader.ValueIsEscaped) throw new NotSupportedException("Base64 escaping is not supported");
-
-        else if (reader.HasValueSequence)
+        if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
-            var length = seq.Length;
+            var longLength = seq.Length;
+            if (longLength > maxEncodedLength) throw TooLong();
+
+            var length = (int)longLength;
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(in seq, seq.GetPosition(length - 2))];
 
             DecodeSequence(seq, decoded, out var consumed, out var written);
@@ -114,10 +105,13 @@ public static class xUtf8JsonReader
         }
         else
         {
-            var utf8 = reader.ValueSpan;
-            var decoded = new byte[((utf8.Length >> 2) * 3) - GetPaddingCount(utf8)];
+            var span = reader.ValueSpan;
+            var length = span.Length;
+            if (length > maxEncodedLength) throw TooLong();
 
-            DecodeSpan(utf8, decoded, out _, out var written);
+            var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(span)];
+
+            DecodeSpan(span, decoded, out _, out var written);
 #if DEBUG
             System.Diagnostics.Debug.Assert(written == decoded.Length);
 #endif
@@ -202,8 +196,8 @@ public static class xUtf8JsonReader
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetPaddingCount(ReadOnlySpan<byte> base64)
-        => base64[^1] == Pad ? base64[^2] == Pad ? 2 : 1 : 0;
+    private static int GetPaddingCount(ReadOnlySpan<byte> span)
+        => span[^1] == Pad ? span[^2] == Pad ? 2 : 1 : 0;
 
     private static int GetPaddingCount(in ReadOnlySequence<byte> sequence, SequencePosition position)
     {
@@ -230,6 +224,12 @@ public static class xUtf8JsonReader
 
         throw new InvalidOperationException("GetPaddingCount");
     }
+
+    private static JsonException NotString() => new("Expected string");
+
+    private static JsonException TooLong() => new("Base64 too long");
+
+    private static JsonException EscapingNotSupported() => new("Base64 escaping is not supported");
 
     private static IMemoryOwner<byte> Slice(this IMemoryOwner<byte> memoryOwner, int start, int length)
     {
