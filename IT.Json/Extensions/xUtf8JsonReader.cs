@@ -140,7 +140,7 @@ public static class xUtf8JsonReader
 
             if (isFinal) throw new InvalidOperationException("InvalidData");
             var span = memory.Span;
-            
+
             isFinal = position.GetObject() == null;
             if (remaining > 0)
             {
@@ -189,94 +189,6 @@ public static class xUtf8JsonReader
             bytes = bytes[bytesWritten..];
         }
     }
-
-    private static void DecodeSequenceOld(ReadOnlySequence<byte> sequence, Span<byte> bytes, out int consumed, out int written)
-    {
-        bool isFinalSegment;
-        consumed = written = 0;
-
-        do
-        {
-            isFinalSegment = sequence.IsSingleSegment;
-            ReadOnlySpan<byte> firstSpan = sequence.FirstSpan;
-
-            var status = Base64.DecodeFromUtf8(firstSpan, bytes, out var bytesConsumed, out var bytesWritten, isFinalSegment);
-            if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
-            if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
-
-            consumed += bytesConsumed;
-            written += bytesWritten;
-
-            sequence = sequence.Slice(bytesConsumed);
-            bytes = bytes.Slice(bytesWritten);
-
-            if (status == OperationStatus.NeedMoreData)
-            {
-                int remaining = firstSpan.Length - bytesConsumed;
-#if DEBUG
-                System.Diagnostics.Debug.Assert(remaining > 0 && remaining < 4);
-#endif
-                // If there are less than 4 elements remaining in this span, process them separately
-                // For System.IO.Pipelines this code-path won't be hit, as the default sizes for
-                // MinimumSegmentSize are a (higher) power of 2, so are multiples of 4, hence
-                // for base64 it is valid or invalid data.
-                // Here it is kept to be on the safe side, if non-stanard ROS should be processed.
-                DecodeSequenceOld_Remaining(
-                        ref sequence,
-                        bytes,
-                        remaining,
-                        ref isFinalSegment,
-                        out bytesConsumed,
-                        out bytesWritten);
-
-                consumed += bytesConsumed;
-                written += bytesWritten;
-
-                bytes = bytes.Slice(bytesWritten);
-            }
-        } while (!isFinalSegment);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void DecodeSequenceOld_Remaining(
-        ref ReadOnlySequence<byte> base64,
-        Span<byte> bytes,
-        int remaining,
-        ref bool isFinalSegment,
-        out int bytesConsumed,
-        out int bytesWritten)
-    {
-        System.Diagnostics.Debug.Assert(!isFinalSegment);
-
-        ReadOnlySpan<byte> firstSpan = base64.FirstSpan;
-        Span<byte> tmpBuffer = stackalloc byte[4];
-        firstSpan[^remaining..].CopyTo(tmpBuffer);
-
-        int base64Needed = tmpBuffer.Length - remaining;
-        Span<byte> tmpBufferRemaining = tmpBuffer[remaining..];
-        base64 = base64.Slice(remaining);
-        firstSpan = base64.FirstSpan;
-
-        if (firstSpan.Length > base64Needed)
-        {
-            firstSpan[0..base64Needed].CopyTo(tmpBufferRemaining);
-            base64 = base64.Slice(base64Needed);
-        }
-        else
-        {
-            firstSpan.CopyTo(tmpBufferRemaining);
-            isFinalSegment = true;
-            System.Diagnostics.Debug.Assert(tmpBuffer.Length == remaining + firstSpan.Length);
-        }
-
-        var status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinalSegment);
-        if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
-#if DEBUG
-        System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
-        System.Diagnostics.Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
-#endif
-    }
-
     private static void DecodeSpan(ReadOnlySpan<byte> utf8, Span<byte> bytes, out int consumed, out int written)
     {
         var status = Base64.DecodeFromUtf8(utf8, bytes, out consumed, out written);
@@ -304,7 +216,7 @@ public static class xUtf8JsonReader
             if (length == 0) continue;
 
             var span = memory.Span;
-            if (span.Length == 2) return GetPaddingCount(span);
+            if (length == 2) return GetPaddingCount(span);
             if (span[0] == Pad) return 2;
 
             break;
@@ -320,24 +232,6 @@ public static class xUtf8JsonReader
         }
 
         throw new InvalidOperationException("GetPaddingCount");
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetPaddingCount_Old(in ReadOnlySequence<byte> sequence, long length)
-    {
-        var end = sequence.Slice(length - 2);
-        var span = end.FirstSpan;
-        if (span.Length == 2) return GetPaddingCount(span);
-
-        if (span.Length == 1)
-        {
-            if (span[0] == Pad) return 2;
-
-            end = sequence.Slice(length - 1);
-            return end.FirstSpan[0] == Pad ? 1 : 0;
-        }
-
-        throw new NotImplementedException();
     }
 
     private static IMemoryOwner<byte> Slice(this IMemoryOwner<byte> memoryOwner, int start, int length)

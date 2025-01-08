@@ -19,7 +19,7 @@ public class SequenceBase64JsonConverterBenchmark
     private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     [Params(1024, 1024 * 1024)]
-    public int Length { get; set; } = 1024;
+    public int Length { get; set; } = 5;
 
     [Params(1, 2, 10)]
     public int Segments { get; set; } = 10;
