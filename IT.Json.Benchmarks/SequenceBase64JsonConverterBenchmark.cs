@@ -28,10 +28,7 @@ public class SequenceBase64JsonConverterBenchmark
     public void GlobalSetup()
     {
         _jso = new JsonSerializerOptions();
-        _jso.Converters.Add(new MemoryByteJsonConverter());
-        _jso.Converters.Add(new ReadOnlyMemoryByteJsonConverter());
-        _jso.Converters.Add(new ArrayByteJsonConverter());
-        _jso.Converters.Add(new MemoryOwnerByteJsonConverter());
+        _jso.Converters.Add(new Base64JsonConverterFactory());
 
         _data = new byte[Length];
         Random.Shared.NextBytes(_data);
