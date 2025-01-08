@@ -103,7 +103,7 @@ public static class xUtf8JsonReader
         {
             var seq = reader.ValueSequence;
             var length = seq.Length;
-            var decoded = new byte[((seq.Length >> 2) * 3) - GetPaddingCount(in seq, length)];
+            var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(in seq, seq.GetPosition(length - 2))];
 
             DecodeSequence(seq, decoded, out var consumed, out var written);
 #if DEBUG
@@ -126,6 +126,71 @@ public static class xUtf8JsonReader
     }
 
     private static void DecodeSequence(ReadOnlySequence<byte> sequence, Span<byte> bytes, out int consumed, out int written)
+    {
+        consumed = written = 0;
+        int remaining = 0, bytesConsumed, bytesWritten;
+        var position = sequence.Start;
+        Span<byte> tmpBuffer = stackalloc byte[4];
+        OperationStatus status;
+        bool isFinal = false;
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            var length = memory.Length;
+            if (length == 0) continue;
+
+            if (isFinal) throw new InvalidOperationException("InvalidData");
+            var span = memory.Span;
+            
+            isFinal = position.GetObject() == null;
+            if (remaining > 0)
+            {
+                var need = 4 - remaining;
+                if (length < need)
+                {
+                    if (isFinal) throw new InvalidOperationException("InvalidData");
+                    span.CopyTo(tmpBuffer[remaining..]);
+                    remaining += length;
+                    continue;
+                }
+                else
+                {
+                    span[..need].CopyTo(tmpBuffer[remaining..]);
+                    remaining = 0;
+                    if (!isFinal && tmpBuffer[3] == Pad) isFinal = true;
+                }
+                status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinal);
+                if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
+#if DEBUG
+                System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
+                System.Diagnostics.Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
+#endif
+                consumed += bytesConsumed;
+                written += bytesWritten;
+                bytes = bytes[bytesWritten..];
+
+                span = span[need..];
+                length = span.Length;
+                if (length == 0) continue;
+            }
+
+            status = Base64.DecodeFromUtf8(span, bytes, out bytesConsumed, out bytesWritten, isFinal);
+            if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
+            if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
+            if (status == OperationStatus.NeedMoreData)
+            {
+                remaining = length - bytesConsumed;
+#if DEBUG
+                System.Diagnostics.Debug.Assert(remaining > 0 && remaining < 4);
+#endif
+                span[bytesConsumed..].CopyTo(tmpBuffer);
+            }
+            consumed += bytesConsumed;
+            written += bytesWritten;
+            bytes = bytes[bytesWritten..];
+        }
+    }
+
+    private static void DecodeSequenceOld(ReadOnlySequence<byte> sequence, Span<byte> bytes, out int consumed, out int written)
     {
         bool isFinalSegment;
         consumed = written = 0;
@@ -156,7 +221,7 @@ public static class xUtf8JsonReader
                 // MinimumSegmentSize are a (higher) power of 2, so are multiples of 4, hence
                 // for base64 it is valid or invalid data.
                 // Here it is kept to be on the safe side, if non-stanard ROS should be processed.
-                DecodeSequenceRemaining(
+                DecodeSequenceOld_Remaining(
                         ref sequence,
                         bytes,
                         remaining,
@@ -173,7 +238,7 @@ public static class xUtf8JsonReader
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static void DecodeSequenceRemaining(
+    private static void DecodeSequenceOld_Remaining(
         ref ReadOnlySequence<byte> base64,
         Span<byte> bytes,
         int remaining,
@@ -231,8 +296,34 @@ public static class xUtf8JsonReader
     private static int GetPaddingCount(ReadOnlySpan<byte> base64)
         => base64[^1] == Pad ? base64[^2] == Pad ? 2 : 1 : 0;
 
+    private static int GetPaddingCount(in ReadOnlySequence<byte> sequence, SequencePosition position)
+    {
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            var length = memory.Length;
+            if (length == 0) continue;
+
+            var span = memory.Span;
+            if (span.Length == 2) return GetPaddingCount(span);
+            if (span[0] == Pad) return 2;
+
+            break;
+        }
+
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            var length = memory.Length;
+            if (length == 0) continue;
+
+            var span = memory.Span;
+            return span[0] == Pad ? 1 : 0;
+        }
+
+        throw new InvalidOperationException("GetPaddingCount");
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int GetPaddingCount(in ReadOnlySequence<byte> sequence, long length)
+    private static int GetPaddingCount_Old(in ReadOnlySequence<byte> sequence, long length)
     {
         var end = sequence.Slice(length - 2);
         var span = end.FirstSpan;
