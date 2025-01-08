@@ -152,12 +152,11 @@ public static class xUtf8JsonReader
                     remaining += length;
                     continue;
                 }
-                else
-                {
-                    span[..need].CopyTo(tmpBuffer[remaining..]);
-                    remaining = 0;
-                    if (!isFinal && tmpBuffer[3] == Pad) isFinal = true;
-                }
+
+                span[..need].CopyTo(tmpBuffer[remaining..]);
+                remaining = 0;
+                if (!isFinal && tmpBuffer[3] == Pad) isFinal = true;
+
                 status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten, isFinal);
                 if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
 #if DEBUG
@@ -173,6 +172,7 @@ public static class xUtf8JsonReader
                 if (length == 0) continue;
             }
 
+            if (!isFinal && span[^1] == Pad) isFinal = true;
             status = Base64.DecodeFromUtf8(span, bytes, out bytesConsumed, out bytesWritten, isFinal);
             if (status == OperationStatus.DestinationTooSmall) throw new InvalidOperationException("DestinationTooSmall");
             if (status == OperationStatus.InvalidData) throw new InvalidOperationException("InvalidData");
