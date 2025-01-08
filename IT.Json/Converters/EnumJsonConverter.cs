@@ -174,7 +174,10 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
         var length = 0;
         while (sequence.TryGet(ref position, out var memory))
         {
-            length += memory.Length;
+            var len = memory.Length;
+            if (len == 0) continue;
+
+            length += len;
 
             if (length > _maxNameLength)
             {
@@ -184,7 +187,7 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
             xxhAlg.Append(memory.Span);
 
-            if (position.GetObject() == null) break;
+            //if (position.GetObject() == null) break;
         }
 
         return _xxhToValue.TryGetValue(xxhAlg.HashToInt32(), out value);
