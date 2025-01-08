@@ -188,6 +188,8 @@ public static class xUtf8JsonReader
             written += bytesWritten;
             bytes = bytes[bytesWritten..];
         }
+
+        if (remaining > 0) throw new InvalidOperationException("InvalidData");
     }
     private static void DecodeSpan(ReadOnlySpan<byte> utf8, Span<byte> bytes, out int consumed, out int written)
     {
