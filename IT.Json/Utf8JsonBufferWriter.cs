@@ -23,7 +23,7 @@ public readonly struct Utf8JsonBufferWriter : IBufferWriter<byte>
 
         var writer = _writer;
         var bytesPending = writer.BytesPending + count;
-        var memory = writer.GetMemory();
+        ref var memory = ref writer.GetMemory();
         if (bytesPending > memory.Length)
             throw new ArgumentOutOfRangeException(nameof(count), count, $"count > {memory.Length}");
 
