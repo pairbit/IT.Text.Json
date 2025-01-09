@@ -32,7 +32,11 @@ public class ArrayByteJsonConverter : JsonConverter<byte[]?>
         }
         else
         {
+#if NET8_0_OR_GREATER
+            writer.WriteBase64Chunked(value);
+#else
             writer.WriteBase64StringValue(value);
+#endif
         }
     }
 }

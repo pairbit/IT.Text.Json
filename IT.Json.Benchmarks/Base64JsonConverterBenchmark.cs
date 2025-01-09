@@ -27,8 +27,14 @@ public class Base64JsonConverterBenchmark
         _data = new byte[Length];
         Random.Shared.NextBytes(_data);
 
-        _dataBase64 = JsonSerializer.SerializeToUtf8Bytes(_data);
+        _dataBase64 = Serialize_Default();
     }
+
+    [Benchmark]
+    public byte[] Serialize_Default() => JsonSerializer.SerializeToUtf8Bytes(_data);
+
+    [Benchmark]
+    public byte[] Serialize_IT() => JsonSerializer.SerializeToUtf8Bytes(_data, _jso);
 
     [Benchmark]
     public Memory<byte> Deserialize_Memory_Default() => JsonSerializer.Deserialize<Memory<byte>>(_dataBase64);
@@ -52,6 +58,8 @@ public class Base64JsonConverterBenchmark
     public void Test()
     {
         GlobalSetup();
+
+        if (!Serialize_IT().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_IT));
 
         if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_Default));
         if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_IT));
