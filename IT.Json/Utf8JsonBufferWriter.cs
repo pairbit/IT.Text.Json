@@ -19,7 +19,7 @@ public readonly struct Utf8JsonBufferWriter : IBufferWriter<byte>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     public void Advance(int count)
     {
-        if (count < 0) throw new ArgumentOutOfRangeException(nameof(count), count, "count < 0");
+        if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count), count, "count <= 0");
 
         var writer = _writer;
         var bytesPending = writer.BytesPending + count;
@@ -32,10 +32,13 @@ public readonly struct Utf8JsonBufferWriter : IBufferWriter<byte>
 
     public Memory<byte> GetMemory(int sizeHint = 0)
     {
+        if (sizeHint < 0) throw new ArgumentOutOfRangeException(nameof(sizeHint));
+        if (sizeHint == 0) sizeHint = 1;
+
         var writer = _writer;
         ref var memory = ref writer.GetMemory();
         var bytesPending = writer.BytesPending;
-        
+
         if (memory.Length - bytesPending < sizeHint)
         {
             //if (writer.GetStream() != null)
