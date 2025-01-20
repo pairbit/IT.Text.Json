@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -39,13 +40,23 @@ internal sealed class RentedList : JsonConverter<RentedListClass>
         }
     }
 
+    public override bool HandleNull => false;
+
+    public override bool CanConvert(Type typeToConvert) => false;
+
+    public override void WriteAsPropertyName(Utf8JsonWriter writer, [DisallowNull] RentedListClass value, JsonSerializerOptions options)
+        => throw new NotSupportedException();
+
+    public override RentedListClass ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        => throw new NotSupportedException();
+
+    public override int GetHashCode() => throw new NotSupportedException();
+
+    public override bool Equals(object? obj) => throw new NotSupportedException();
+
     public override RentedListClass? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 
     public override void Write(Utf8JsonWriter writer, RentedListClass value, JsonSerializerOptions options)
-    {
-        throw new NotImplementedException();
-    }
+        => throw new NotSupportedException();
 }
