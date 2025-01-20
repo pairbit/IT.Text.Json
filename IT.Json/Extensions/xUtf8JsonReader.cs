@@ -49,6 +49,45 @@ public static class xUtf8JsonReader
         }
     }
 
+    public static Memory<byte> GetRentedMemoryFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
+    {
+        var tokenType = reader.TokenType;
+        if (tokenType == JsonTokenType.Null) return default;
+        if (tokenType != JsonTokenType.String) throw NotString();
+        if (reader.ValueIsEscaped) throw EscapingNotSupported();
+
+        if (reader.HasValueSequence)
+        {
+            var seq = reader.ValueSequence;
+            var longLength = seq.Length;
+            if (longLength > maxEncodedLength) throw TooLong();
+
+            var length = (int)longLength;
+            if (length % 4 != 0) throw InvalidLength();
+
+            var maxLength = (length >> 2) * 3;
+            Memory<byte> decoded = ArrayPool<byte>.Shared.Rent(maxLength);
+
+            DecodeSequence(seq, decoded.Span[..maxLength], out _, out var written);
+
+            return decoded[..written];
+        }
+        else
+        {
+            var span = reader.ValueSpan;
+            var length = span.Length;
+            if (length > maxEncodedLength) throw TooLong();
+            if (length % 4 != 0) throw InvalidLength();
+            
+            var maxLength = (length >> 2) * 3;
+            Memory<byte> decoded = ArrayPool<byte>.Shared.Rent(maxLength);
+
+            DecodeSpan(span, decoded.Span[..maxLength], out _, out var written);
+
+            return decoded[..written];
+        }
+    }
+
     public static Memory<byte> GetMemoryFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
     {
         var tokenType = reader.TokenType;

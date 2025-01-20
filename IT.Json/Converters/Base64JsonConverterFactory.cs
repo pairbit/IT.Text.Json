@@ -21,6 +21,7 @@ public class Base64JsonConverterFactory : JsonConverterFactory
 
     public override bool CanConvert(Type type) =>
         type == typeof(byte[]) ||
+        //type == typeof(ArraySegment<byte>) ||
         type == typeof(Memory<byte>) ||
         type == typeof(ReadOnlyMemory<byte>) ||
         //type == typeof(ReadOnlySequence<byte>) ||
