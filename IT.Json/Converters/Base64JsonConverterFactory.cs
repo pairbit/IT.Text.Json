@@ -21,7 +21,7 @@ public class Base64JsonConverterFactory : JsonConverterFactory
 
     public override bool CanConvert(Type type) =>
         type == typeof(byte[]) ||
-        //type == typeof(ArraySegment<byte>) ||
+        type == typeof(ArraySegment<byte>) ||
         type == typeof(Memory<byte>) ||
         type == typeof(ReadOnlyMemory<byte>) ||
         //type == typeof(ReadOnlySequence<byte>) ||
@@ -30,6 +30,7 @@ public class Base64JsonConverterFactory : JsonConverterFactory
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
         if (typeToConvert == typeof(byte[])) return new ArrayByteJsonConverter(_maxEncodedLength);
+        if (typeToConvert == typeof(ArraySegment<byte>)) return new ArraySegmentByteJsonConverter(_maxEncodedLength);
         if (typeToConvert == typeof(Memory<byte>)) return new MemoryByteJsonConverter(_maxEncodedLength);
         if (typeToConvert == typeof(ReadOnlyMemory<byte>)) return new ReadOnlyMemoryByteJsonConverter(_maxEncodedLength);
         if (typeToConvert == typeof(IMemoryOwner<byte>)) return new MemoryOwnerByteJsonConverter(_maxEncodedLength);
