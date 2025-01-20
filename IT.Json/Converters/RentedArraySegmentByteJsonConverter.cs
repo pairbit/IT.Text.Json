@@ -1,4 +1,5 @@
 ﻿using IT.Json.Extensions;
+using IT.Json.Internal;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -23,7 +24,19 @@ public class RentedArraySegmentByteJsonConverter : JsonConverter<ArraySegment<by
 
     public override ArraySegment<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return reader.GetRentedArraySegmentFromBase64(_maxEncodedLength);
+        var arraySegment = reader.GetRentedArraySegmentFromBase64(_maxEncodedLength);
+        
+        var array = arraySegment.Array;
+        if (array != null && array.Length > 0)
+        {
+            var rentedList = options.GetConverter(typeof(RentedListClass)) as RentedList;
+            if (rentedList != null)
+            {
+                rentedList.Add(array);
+            }
+        }
+
+        return arraySegment;
     }
 
     public override void Write(Utf8JsonWriter writer, ArraySegment<byte> value, JsonSerializerOptions options)

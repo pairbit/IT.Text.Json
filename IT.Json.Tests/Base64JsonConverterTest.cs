@@ -114,14 +114,20 @@ internal class Base64JsonConverterTest
     private async Task TestAsync(ArraySegment<byte> data, byte[] bak)
     {
         EntityByte? entityCopy;
+
+        var rentedList = new RentedList();
+        var jso = new JsonSerializerOptions(_jso);
+        jso.Converters.Add(rentedList);
+
         try
         {
             var stream = new MemoryStream(bak);
-            entityCopy = await JsonSerializer.DeserializeAsync<EntityByte>(stream, _jso);
+            entityCopy = await JsonSerializer.DeserializeAsync<EntityByte>(stream, jso);
+            rentedList.Clear();
         }
         catch (JsonException)
         {
-            throw new NotImplementedException("Leak");
+            rentedList.ReturnAndClear();
             return;
         }
 
