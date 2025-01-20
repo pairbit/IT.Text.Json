@@ -23,7 +23,7 @@ public class ReadOnlyMemoryByteJsonConverter : JsonConverter<ReadOnlyMemory<byte
 
     public override ReadOnlyMemory<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return reader.GetMemoryFromBase64(_maxEncodedLength);
+        return reader.GetArraySegmentFromBase64(_maxEncodedLength);
     }
 
     public override void Write(Utf8JsonWriter writer, ReadOnlyMemory<byte> value, JsonSerializerOptions options)

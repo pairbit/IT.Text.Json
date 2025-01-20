@@ -23,7 +23,7 @@ public class RentedMemoryByteJsonConverter : JsonConverter<Memory<byte>>
 
     public override Memory<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return reader.GetRentedMemoryFromBase64(_maxEncodedLength);
+        return reader.GetRentedArraySegmentFromBase64(_maxEncodedLength);
     }
 
     public override void Write(Utf8JsonWriter writer, Memory<byte> value, JsonSerializerOptions options)
