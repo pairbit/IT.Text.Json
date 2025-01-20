@@ -11,6 +11,8 @@ internal static class ArrayPoolShared<T>
     internal static List<T?[]>? _list;
     private static bool _addToList;
 
+    public static bool IsEnabled => _addToList;
+
     public static void AddToList()
     {
         _addToList = true;

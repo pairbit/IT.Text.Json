@@ -25,14 +25,16 @@ public class RentedArraySegmentByteJsonConverter : JsonConverter<ArraySegment<by
     public override ArraySegment<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var arraySegment = reader.GetRentedArraySegmentFromBase64(_maxEncodedLength);
-        
-        var array = arraySegment.Array;
-        if (array != null && array.Length > 0)
+
+        if (!ArrayPoolShared<byte>.IsEnabled)
         {
-            var rentedList = options.GetConverter(typeof(RentedListClass)) as RentedList;
-            if (rentedList != null)
+            var array = arraySegment.Array;
+            if (array != null && array.Length > 0)
             {
-                rentedList.Add(array);
+                if (options.Converters.TryGetRentedList(out var rentedList))
+                {
+                    rentedList.Add(array);
+                }
             }
         }
 
