@@ -23,8 +23,7 @@ public class ArraySegmentByteJsonConverter : JsonConverter<ArraySegment<byte>>
 
     public override ArraySegment<byte> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var array = reader.GetArrayFromBase64(_maxEncodedLength);
-        return array == null ? default : new ArraySegment<byte>(array);
+        return reader.GetArraySegmentFromBase64(_maxEncodedLength);
     }
 
     public override void Write(Utf8JsonWriter writer, ArraySegment<byte> value, JsonSerializerOptions options)
