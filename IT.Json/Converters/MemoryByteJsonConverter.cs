@@ -28,10 +28,6 @@ public class MemoryByteJsonConverter : JsonConverter<Memory<byte>>
 
     public override void Write(Utf8JsonWriter writer, Memory<byte> value, JsonSerializerOptions options)
     {
-#if NET8_0_OR_GREATER
-        writer.WriteBase64Chunked(value.Span);
-#else
-        writer.WriteBase64StringValue(value.Span);
-#endif
+        writer.WriteBase64(value.Span);
     }
 }

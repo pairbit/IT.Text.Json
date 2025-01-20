@@ -33,11 +33,7 @@ public class MemoryOwnerByteJsonConverter : JsonConverter<IMemoryOwner<byte>?>
         }
         else
         {
-#if NET8_0_OR_GREATER
-            writer.WriteBase64Chunked(value.Memory.Span);
-#else
-            writer.WriteBase64StringValue(value.Memory.Span);
-#endif
+            writer.WriteBase64(value.Memory.Span);
         }
     }
 }

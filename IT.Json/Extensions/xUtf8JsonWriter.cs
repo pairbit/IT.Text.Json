@@ -1,16 +1,29 @@
-﻿#if NET8_0_OR_GREATER
-
-using System;
+﻿using System;
+#if NET8_0_OR_GREATER
 using System.Buffers;
 using System.Buffers.Text;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+#endif
 using System.Text.Json;
 
 namespace IT.Json.Extensions;
 
 public static class xUtf8JsonWriter
 {
+    /// <exception cref="ArgumentException"/>
+    /// <exception cref="InvalidOperationException"/>
+    public static void WriteBase64(this Utf8JsonWriter writer, ReadOnlySpan<byte> bytes)
+    {
+#if NET8_0_OR_GREATER
+        writer.WriteBase64Chunked(bytes);
+#else
+        writer.WriteBase64StringValue(bytes);
+#endif
+    }
+
+#if NET8_0_OR_GREATER
+
     private const byte Quote = (byte)'"';
 
     public static void WriteBase64Chunked(this Utf8JsonWriter writer, ReadOnlySpan<byte> span)
@@ -94,6 +107,6 @@ public static class xUtf8JsonWriter
 
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "SetFlagToAddListSeparatorBeforeNextItem")]
     internal extern static void SetFlagToAddListSeparatorBeforeNextItem(this Utf8JsonWriter writer);
-}
 
 #endif
+}
