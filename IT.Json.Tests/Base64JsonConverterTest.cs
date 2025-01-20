@@ -72,11 +72,20 @@ internal class Base64JsonConverterTest
         Test(entityInt.Data, bakInt);
     }
 
-    //[Test]
-    //public async Task TestAsync()
-    //{
-    //    await JsonSerializer.DeserializeAsync(inputStream, context.ModelType, SerializerOptions);
-    //}
+    [Test]
+    public async Task TestAsync()
+    {
+        var bakInt = Convert.FromBase64String("eyJEYXRhIjoiZlNodyIsIklkIjozMjc2N30=");
+        using var entityInt = JsonSerializer.Deserialize<EntityInt>(bakInt, _jso)!;
+
+        var entity = new EntityByte() { Id = 1, Data = entityInt.Data };
+
+        var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
+        var str = System.Text.Encoding.UTF8.GetString(bin);
+
+        await TestAsync(entityInt.Data, bin);
+        await TestAsync(entityInt.Data, bakInt);
+    }
 
     private void Test(ArraySegment<byte> data, byte[] bak)
     {
@@ -96,6 +105,28 @@ internal class Base64JsonConverterTest
 
         var copyData = entityCopy!.Data;
         
+        Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
+        Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
+
+        entityCopy.Dispose();
+    }
+
+    private async Task TestAsync(ArraySegment<byte> data, byte[] bak)
+    {
+        EntityByte? entityCopy;
+        try
+        {
+            var stream = new MemoryStream(bak);
+            entityCopy = await JsonSerializer.DeserializeAsync<EntityByte>(stream, _jso);
+        }
+        catch (JsonException)
+        {
+            throw new NotImplementedException("Leak");
+            return;
+        }
+
+        var copyData = entityCopy!.Data;
+
         Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
         Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
 
