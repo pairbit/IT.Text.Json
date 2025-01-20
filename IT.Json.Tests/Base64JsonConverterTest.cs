@@ -8,6 +8,16 @@ namespace IT.Json.Tests;
 
 internal class Base64JsonConverterTest
 {
+    private static readonly JsonSerializerOptions _jso;
+
+    static Base64JsonConverterTest()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new Base64JsonConverterFactory());
+
+        _jso = jso;
+    }
+
     public class EntityInt : IDisposable
     {
         [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
@@ -47,37 +57,19 @@ internal class Base64JsonConverterTest
     [Test]
     public void Test()
     {
-        var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new Base64JsonConverterFactory());
-
         var bakInt = Convert.FromBase64String("eyJEYXRhIjoiZlNodyIsIklkIjozMjc2N30=");
-        using var entityInt = JsonSerializer.Deserialize<EntityInt>(bakInt, jso)!;
+        using var entityInt = JsonSerializer.Deserialize<EntityInt>(bakInt, _jso)!;
 
         //var array = new byte[3];
         //Random.Shared.NextBytes(array);
 
         var entity = new EntityByte() { Id = 1, Data = entityInt.Data };
 
-        var bin = JsonSerializer.SerializeToUtf8Bytes(entity, jso);
+        var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
         var str = System.Text.Encoding.UTF8.GetString(bin);
 
-        EntityByte? entityCopy;
-        ArrayPoolShared<byte>.AddToList();
-        try
-        {
-            entityCopy = JsonSerializer.Deserialize<EntityByte>(bakInt, jso);
-        }
-        catch (JsonException ex)
-        {
-            ArrayPoolShared<byte>.ReturnAndClear();
-            throw;
-        }
-
-        var data = entityCopy!.Data;
-
-        Assert.That(entity.Data.AsSpan().SequenceEqual(data.AsSpan()));
-
-        entityCopy.Dispose();
+        Test(entityInt.Data, bin);
+        Test(entityInt.Data, bakInt);
     }
 
     //[Test]
@@ -85,4 +77,28 @@ internal class Base64JsonConverterTest
     //{
     //    await JsonSerializer.DeserializeAsync(inputStream, context.ModelType, SerializerOptions);
     //}
+
+    private void Test(ArraySegment<byte> data, byte[] bak)
+    {
+        EntityByte? entityCopy;
+        ArrayPoolShared<byte>.AddToList();
+        try
+        {
+            entityCopy = JsonSerializer.Deserialize<EntityByte>(bak, _jso);
+            ArrayPoolShared<byte>.Clear();
+        }
+        catch (JsonException)
+        {
+            ArrayPoolShared<byte>.ReturnAndClear();
+
+            return;
+        }
+
+        var copyData = entityCopy!.Data;
+        
+        Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
+        Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
+
+        entityCopy.Dispose();
+    }
 }
