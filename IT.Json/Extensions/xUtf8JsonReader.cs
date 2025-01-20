@@ -10,7 +10,7 @@ public static class xUtf8JsonReader
 {
     private const byte Pad = (byte)'=';
 
-    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, MemoryPool<byte> pool)
+    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
@@ -27,7 +27,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var owner = pool.Rent(maxLength);
+            var owner = MemoryPool<byte>.Shared.Rent(maxLength);
 
             DecodeSequence(seq, owner.Memory.Span[..maxLength], out _, out var written);
 
@@ -41,7 +41,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var owner = pool.Rent(maxLength);
+            var owner = MemoryPool<byte>.Shared.Rent(maxLength);
 
             DecodeSpan(span, owner.Memory.Span[..maxLength], out _, out var written);
 
