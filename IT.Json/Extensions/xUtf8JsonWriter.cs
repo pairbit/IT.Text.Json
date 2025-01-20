@@ -13,13 +13,17 @@ public static class xUtf8JsonWriter
 {
     /// <exception cref="ArgumentException"/>
     /// <exception cref="InvalidOperationException"/>
-    public static void WriteBase64(this Utf8JsonWriter writer, ReadOnlySpan<byte> bytes)
+    public static void WriteBase64(this Utf8JsonWriter writer, ReadOnlySpan<byte> bytes
+#if NET8_0_OR_GREATER
+        , bool chunked = false
+#endif
+        )
     {
 #if NET8_0_OR_GREATER
-        writer.WriteBase64Chunked(bytes);
-#else
-        writer.WriteBase64StringValue(bytes);
+        if (chunked) writer.WriteBase64Chunked(bytes);
+        else
 #endif
+            writer.WriteBase64StringValue(bytes);
     }
 
 #if NET8_0_OR_GREATER
