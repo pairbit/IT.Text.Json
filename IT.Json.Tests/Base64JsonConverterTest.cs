@@ -1,6 +1,7 @@
 ﻿using IT.Json.Converters;
-using System;
+using System.Buffers;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IT.Json.Tests;
 
@@ -10,6 +11,7 @@ internal class Base64JsonConverterTest
     {
         public int Id { get; set; }
 
+        [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
         public ArraySegment<byte> Data { get; set; }
     }
 
@@ -27,8 +29,15 @@ internal class Base64JsonConverterTest
         var str = System.Text.Encoding.UTF8.GetString(bin);
 
         var entityCopy = JsonSerializer.Deserialize<Entity>(bin, jso)!;
+        var data = entityCopy.Data;
 
-        Assert.That(entity.Data.AsSpan().SequenceEqual(entityCopy.Data.AsSpan()));
+        Assert.That(entity.Data.AsSpan().SequenceEqual(data.AsSpan()));
+        
+        var dataArray = data.Array;
+        if (dataArray != null && dataArray.Length > 0)
+        {
+            ArrayPool<byte>.Shared.Return(dataArray);
+        }
     }
 
     //[Test]
