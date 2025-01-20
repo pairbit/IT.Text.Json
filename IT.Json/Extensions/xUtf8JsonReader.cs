@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IT.Json.Internal;
+using System;
 using System.Buffers;
 using System.Buffers.Text;
 using System.Runtime.CompilerServices;
@@ -66,7 +67,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            Memory<byte> decoded = ArrayPool<byte>.Shared.Rent(maxLength);
+            Memory<byte> decoded = ArrayPoolShared<byte>.Rent(maxLength);
 
             DecodeSequence(seq, decoded.Span[..maxLength], out _, out var written);
 
@@ -80,7 +81,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
             
             var maxLength = (length >> 2) * 3;
-            Memory<byte> decoded = ArrayPool<byte>.Shared.Rent(maxLength);
+            Memory<byte> decoded = ArrayPoolShared<byte>.Rent(maxLength);
 
             DecodeSpan(span, decoded.Span[..maxLength], out _, out var written);
 
