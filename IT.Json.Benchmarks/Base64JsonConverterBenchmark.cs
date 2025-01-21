@@ -36,11 +36,11 @@ public class Base64JsonConverterBenchmark
     [Benchmark]
     public byte[] Serialize_IT() => JsonSerializer.SerializeToUtf8Bytes(_data, _jso);
 
-    [Benchmark]
-    public byte[] Serialize_Default_File() => SerializeToFile(_data, "default");
+    //[Benchmark]
+    //public byte[] Serialize_Default_File() => SerializeToFile(_data, "default");
 
-    [Benchmark]
-    public byte[] Serialize_IT_File() => SerializeToFile(_data, "it", _jso);
+    //[Benchmark]
+    //public byte[] Serialize_IT_File() => SerializeToFile(_data, "it", _jso);
 
     //[Benchmark]
     public Memory<byte> Deserialize_Memory_Default() => JsonSerializer.Deserialize<Memory<byte>>(_dataBase64);
@@ -66,8 +66,8 @@ public class Base64JsonConverterBenchmark
         GlobalSetup();
 
         if (!Serialize_IT().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_IT));
-        if (!Serialize_IT_File().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_IT_File));
-        if (!Serialize_Default_File().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_Default_File));
+        //if (!Serialize_IT_File().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_IT_File));
+        //if (!Serialize_Default_File().AsSpan().SequenceEqual(_dataBase64)) throw new InvalidOperationException(nameof(Serialize_Default_File));
 
         if (!Deserialize_Memory_Default().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_Default));
         if (!Deserialize_Memory_IT().Span.SequenceEqual(_data)) throw new InvalidOperationException(nameof(Deserialize_Memory_IT));
@@ -78,14 +78,14 @@ public class Base64JsonConverterBenchmark
         Deserialize_Owner_IT();
     }
 
-    public static byte[] SerializeToFile<TValue>(TValue value, string filename, JsonSerializerOptions? options = null)
-    {
-        var file = $@"S:\git\pairbit\IT.Json\stream\{filename}.json";
+    //public static byte[] SerializeToFile<TValue>(TValue value, string filename, JsonSerializerOptions? options = null)
+    //{
+    //    var file = $@"S:\git\pairbit\IT.Json\stream\{filename}.json";
 
-        using var stream = File.Open(file, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-        using var writer = new Utf8JsonWriter(stream);
-        JsonSerializer.Serialize(writer, value, options);
+    //    using var stream = File.Open(file, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
+    //    using var writer = new Utf8JsonWriter(stream);
+    //    JsonSerializer.Serialize(writer, value, options);
         
-        return File.ReadAllBytes(file);
-    }
+    //    return File.ReadAllBytes(file);
+    //}
 }
