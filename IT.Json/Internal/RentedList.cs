@@ -11,7 +11,7 @@ internal sealed class RentedListClass { }
 
 internal sealed class RentedList : JsonConverter<RentedListClass>
 {
-    private List<byte[]> _list = new();
+    private readonly List<byte[]> _list = [];
 
     public void Add(byte[] rented)
     {
@@ -21,7 +21,7 @@ internal sealed class RentedList : JsonConverter<RentedListClass>
     public void ReturnAndClear()
     {
         var list = _list;
-        if (list != null)
+        if (list != null && list.Count > 0)
         {
             foreach (var rented in list)
             {
@@ -34,7 +34,7 @@ internal sealed class RentedList : JsonConverter<RentedListClass>
     public void Clear()
     {
         var list = _list;
-        if (list != null)
+        if (list != null && list.Count > 0)
         {
             list.Clear();
         }

@@ -239,10 +239,7 @@ public static class Json
         return value;
     }
 
-    public static async ValueTask<TValue?> DeserializeAsync<TValue>(
-            Stream utf8Json,
-            JsonSerializerOptions? options = null,
-            CancellationToken cancellationToken = default)
+    public static async ValueTask<TValue?> DeserializeAsync<TValue>(Stream utf8Json, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
     {
         if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
 
