@@ -57,7 +57,7 @@ internal class Base64JsonConverterTest
     public void Test()
     {
         var bakInt = Convert.FromBase64String("eyJEYXRhIjoiZlNodyIsIklkIjozMjc2N30=");
-        using var entityInt = JsonSerializer.Deserialize<EntityInt>(bakInt, _jso)!;
+        using var entityInt = Json.Deserialize<EntityInt>(bakInt, _jso)!;
 
         //var array = new byte[3];
         //Random.Shared.NextBytes(array);
@@ -81,7 +81,7 @@ internal class Base64JsonConverterTest
     public async Task TestAsync()
     {
         var bakInt = Convert.FromBase64String("eyJEYXRhIjoiZlNodyIsIklkIjozMjc2N30=");
-        using var entityInt = JsonSerializer.Deserialize<EntityInt>(bakInt, _jso)!;
+        using var entityInt = Json.Deserialize<EntityInt>(bakInt, _jso)!;
 
         var entity = new EntityByte() { Id = 1, Data = entityInt.Data };
 
