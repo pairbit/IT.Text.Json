@@ -1,4 +1,5 @@
 ﻿using IT.Buffers;
+using IT.Buffers.Extensions;
 using IT.Json.Internal;
 using System;
 using System.Buffers;
@@ -261,37 +262,7 @@ public static class Json
         var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
         try
         {
-            var buffer = ArrayPool<byte>.Shared.Rent(BufferSize.KB_64);
-            var offset = 0;
-            do
-            {
-                if (offset == buffer.Length)
-                {
-                    builder.Add(buffer, returnToPool: true);
-                    buffer = ArrayPool<byte>.Shared.Rent(BufferSize.GetDoubleCapacity(buffer.Length));
-                    offset = 0;
-                }
-
-                int read = 0;
-                try
-                {
-                    read = await utf8Json.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken).ConfigureAwait(false);
-                }
-                catch
-                {
-                    // buffer is not added in builder, so return here.
-                    ArrayPool<byte>.Shared.Return(buffer);
-                    throw;
-                }
-
-                offset += read;
-
-                if (read == 0)
-                {
-                    builder.Add(buffer.AsMemory(0, offset), returnToPool: true);
-                    break;
-                }
-            } while (true);
+            await builder.AddAsync(utf8Json, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             if (builder.TryGetSingleMemory(out var memory))
             {
