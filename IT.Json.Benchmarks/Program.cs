@@ -18,7 +18,7 @@
 //new SequenceBase64JsonConverterBenchmark().Test();
 //BenchmarkDotNet.Running.BenchmarkRunner.Run<SequenceBase64JsonConverterBenchmark>();
 
-await new RentedBase64JsonConverterBenchmark().Test();
-BenchmarkDotNet.Running.BenchmarkRunner.Run<RentedBase64JsonConverterBenchmark>();
+await new RentedArrayBase64JsonConverterBenchmark().Test();
+BenchmarkDotNet.Running.BenchmarkRunner.Run<RentedArrayBase64JsonConverterBenchmark>();
 
 Console.WriteLine("End....");

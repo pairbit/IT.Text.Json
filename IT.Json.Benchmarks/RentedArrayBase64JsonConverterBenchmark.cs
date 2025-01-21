@@ -13,8 +13,8 @@ public class RentedArrayBase64JsonConverterBenchmark
     private static byte[] _dataBase64 = null!;
     private static byte[] _invalidDataBase64 = null!;
 
-    [Params(1024, 80 * 1024, 1024 * 1024, 16 * 1024 * 1024)]
-    public int Length { get; set; } = 16 * 1024 * 1024;//1MB
+    [Params(1024, 80 * 1024, 1024 * 1024)]
+    public int Length { get; set; } = 80 * 1024;//1MB
     
     [Params(10)]
     public int Count { get; set; } = 10;
@@ -28,11 +28,17 @@ public class RentedArrayBase64JsonConverterBenchmark
         var rentedDatas = new RentedData[Count];
         for (int i = 0; i < rentedDatas.Length; i++)
         {
-            rentedDatas[i] = new RentedData() { Data = _data, Id = (byte)i };
+            rentedDatas[i] = new RentedData() { Data = _data, Id = 255 };
         }
 
         _dataBase64 = JsonSerializer.SerializeToUtf8Bytes(rentedDatas);
-        _invalidDataBase64 = JsonSerializer.SerializeToUtf8Bytes(new RentedDataInt() { Data = _data, Id = 256 });
+
+        _invalidDataBase64 = new byte[_dataBase64.Length];
+        _dataBase64.CopyTo(_invalidDataBase64.AsSpan());
+
+        _invalidDataBase64[^3] = 54;//invalid Id: 256
+
+        //var str = Encoding.UTF8.GetString(_invalidDataBase64);
     }
 
     [Benchmark]
