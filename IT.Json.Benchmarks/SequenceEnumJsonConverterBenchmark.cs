@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using IT.Buffers;
-using IT.Buffers.Pool;
 using IT.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
@@ -16,7 +15,6 @@ public class SequenceEnumJsonConverterBenchmark
 {
     private static EnumByte _enumValue;
     private static ReadOnlySequence<byte> _enumString;
-    private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     private static JsonSerializerOptions _jso = null!;
     private static JsonSerializerOptions _jso_IT = null!;
@@ -36,15 +34,7 @@ public class SequenceEnumJsonConverterBenchmark
         _enumValue = EnumByte.TwoTwoTwo;
         var enumString = JsonSerializer.SerializeToUtf8Bytes(_enumValue, _jso);
 
-        _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
-
-        _enumString = _sequenceBuilder.Add(enumString, Segments).Build();
-    }
-
-    [GlobalCleanup]
-    public void GlobalCleanup()
-    {
-        ReadOnlySequenceBuilderPool<byte>.Return(_sequenceBuilder);
+        _enumString = new ReadOnlySequenceBuilder<byte>().Add(enumString, Segments).Build();
     }
 
     [Benchmark]

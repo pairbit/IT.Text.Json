@@ -1,5 +1,4 @@
 ﻿using IT.Buffers;
-using IT.Buffers.Pool;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -53,8 +52,8 @@ public class JsonDeserializerTester
 
     private static void DeserializeSegments<TValue>(TValue value, JsonException? exception, ReadOnlyMemory<byte> utf8Json, JsonSerializerOptions? options = null)
     {
-        var builder = ReadOnlySequenceBuilderPool<byte>.Rent(SegmentsMax);
-
+        var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
+        builder.EnsureCapacity(SegmentsMax);
         try
         {
             var max = utf8Json.Length < SegmentsMax ? utf8Json.Length : SegmentsMax;
@@ -94,7 +93,7 @@ public class JsonDeserializerTester
         }
         finally
         {
-            ReadOnlySequenceBuilderPool<byte>.Return(builder);
+            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
         }
     }
 

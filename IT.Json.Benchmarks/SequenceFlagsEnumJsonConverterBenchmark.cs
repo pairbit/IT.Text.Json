@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using IT.Buffers;
-using IT.Buffers.Pool;
 using IT.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
@@ -16,7 +15,6 @@ public class SequenceFlagsEnumJsonConverterBenchmark
 {
     private static EnumByteFlags _maxFlags;
     private static ReadOnlySequence<byte> _maxFlagsSequence;
-    private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     private static JsonSerializerOptions _jso = null!;
     private static JsonSerializerOptions _jso_IT = null!;
@@ -37,15 +35,7 @@ public class SequenceFlagsEnumJsonConverterBenchmark
         var maxFlags = JsonSerializer.SerializeToUtf8Bytes(_maxFlags, _jso);
         //var maxFlagsString = Encoding.UTF8.GetString(maxFlags);
 
-        _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
-
-        _maxFlagsSequence = _sequenceBuilder.Add(maxFlags, Segments).Build();
-    }
-
-    [GlobalCleanup]
-    public void GlobalCleanup()
-    {
-        ReadOnlySequenceBuilderPool<byte>.Return(_sequenceBuilder);
+        _maxFlagsSequence = new ReadOnlySequenceBuilder<byte>().Add(maxFlags, Segments).Build();
     }
 
     [Benchmark]

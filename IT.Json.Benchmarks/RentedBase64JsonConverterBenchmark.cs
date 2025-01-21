@@ -43,7 +43,7 @@ public class RentedBase64JsonConverterBenchmark
     private static byte[] _invalidDataBase64 = null!;
 
     [Params(1024, 80 * 1024, 1024 * 1024, 16 * 1024 * 1024)]
-    public int Length { get; set; } = 16;//1MB
+    public int Length { get; set; } = 16 * 1024 * 1024;//1MB
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -121,6 +121,28 @@ public class RentedBase64JsonConverterBenchmark
         throw new InvalidOperationException(nameof(Deserialize_Ex_IT));
     }
 
+    [Benchmark]
+    public async Task Deserialize_Stream_IT()
+    {
+        using var rentedData = await Json.DeserializeAsync<RentedData>(new MemoryStream(_dataBase64));
+        if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
+            throw new InvalidOperationException(nameof(Deserialize_Stream_Default));
+    }
+
+    [Benchmark]
+    public async Task<bool> Deserialize_Stream_Ex_IT()
+    {
+        try
+        {
+            await Json.DeserializeAsync<RentedData>(new MemoryStream(_invalidDataBase64));
+        }
+        catch (JsonException)
+        {
+            return true;
+        }
+        throw new InvalidOperationException(nameof(Deserialize_Stream_Ex_Default));
+    }
+
     public async Task Test()
     {
         GlobalSetup();
@@ -133,5 +155,7 @@ public class RentedBase64JsonConverterBenchmark
 
         await Deserialize_Stream_Default();
         await Deserialize_Stream_Ex_Default();
+        await Deserialize_Stream_IT();
+        await Deserialize_Stream_Ex_IT();
     }
 }

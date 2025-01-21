@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using IT.Buffers;
-using IT.Buffers.Pool;
 using IT.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
@@ -16,7 +15,6 @@ public class SequenceBase64JsonConverterBenchmark
     private static byte[] _data = null!;
     private static ReadOnlySequence<byte> _dataBase64;
     private static JsonSerializerOptions _jso = null!;
-    private static ReadOnlySequenceBuilder<byte> _sequenceBuilder = null!;
 
     [Params(1024, 1024 * 1024, 16 * 1024 * 1024)]
     public int Length { get; set; } = 1024;
@@ -35,15 +33,8 @@ public class SequenceBase64JsonConverterBenchmark
 
         var dataBase64 = JsonSerializer.SerializeToUtf8Bytes(_data);
 
-        _sequenceBuilder = ReadOnlySequenceBuilderPool<byte>.Rent(Segments);
         //_dataBase64 = _sequenceBuilder.Add(dataBase64.AsMemory()[..^2], Segments).Add(dataBase64.AsMemory()[^2..]).Build();
-        _dataBase64 = _sequenceBuilder.Add(dataBase64, Segments).Build();
-    }
-
-    [GlobalCleanup]
-    public void GlobalCleanup()
-    {
-        ReadOnlySequenceBuilderPool<byte>.Return(_sequenceBuilder);
+        _dataBase64 = new ReadOnlySequenceBuilder<byte>().Add(dataBase64, Segments).Build();
     }
 
     [Benchmark]
