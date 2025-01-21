@@ -12,10 +12,13 @@
 //new SequenceFlagsEnumJsonConverterBenchmark().Test();
 //BenchmarkDotNet.Running.BenchmarkRunner.Run<SequenceFlagsEnumJsonConverterBenchmark>();
 
-new Base64JsonConverterBenchmark().Test();
-BenchmarkDotNet.Running.BenchmarkRunner.Run<Base64JsonConverterBenchmark>();
+//new Base64JsonConverterBenchmark().Test();
+//BenchmarkDotNet.Running.BenchmarkRunner.Run<Base64JsonConverterBenchmark>();
 
 //new SequenceBase64JsonConverterBenchmark().Test();
 //BenchmarkDotNet.Running.BenchmarkRunner.Run<SequenceBase64JsonConverterBenchmark>();
+
+new RentedBase64JsonConverterBenchmark().Test();
+BenchmarkDotNet.Running.BenchmarkRunner.Run<RentedBase64JsonConverterBenchmark>();
 
 Console.WriteLine("End....");
