@@ -1,42 +1,13 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using IT.Json.Converters;
-using System.Buffers;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace IT.Json.Benchmarks;
-
-public class RentedData : IDisposable
-{
-    [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
-    public ArraySegment<byte> Data { get; set; }
-
-    public byte Id { get; set; }
-
-    public void Dispose()
-    {
-        var dataArray = Data.Array;
-        if (dataArray != null && dataArray.Length > 0)
-        {
-            Data = default;
-            ArrayPool<byte>.Shared.Return(dataArray);
-        }
-    }
-}
-
-public class RentedDataInt
-{
-    [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
-    public ArraySegment<byte> Data { get; set; }
-
-    public int Id { get; set; }
-}
 
 [MemoryDiagnoser]
 [MinColumn, MaxColumn]
 [Orderer(SummaryOrderPolicy.FastestToSlowest, MethodOrderPolicy.Declared)]
-public class RentedBase64JsonConverterBenchmark
+public class RentedArrayBase64JsonConverterBenchmark
 {
     private static byte[] _data = null!;
     private static byte[] _dataBase64 = null!;
@@ -44,6 +15,9 @@ public class RentedBase64JsonConverterBenchmark
 
     [Params(1024, 80 * 1024, 1024 * 1024, 16 * 1024 * 1024)]
     public int Length { get; set; } = 16 * 1024 * 1024;//1MB
+    
+    [Params(10)]
+    public int Count { get; set; } = 10;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -51,16 +25,28 @@ public class RentedBase64JsonConverterBenchmark
         _data = new byte[Length];
         Random.Shared.NextBytes(_data);
 
-        _dataBase64 = JsonSerializer.SerializeToUtf8Bytes(new RentedData() { Data = _data, Id = 255 });
+        var rentedDatas = new RentedData[Count];
+        for (int i = 0; i < rentedDatas.Length; i++)
+        {
+            rentedDatas[i] = new RentedData() { Data = _data, Id = (byte)i };
+        }
+
+        _dataBase64 = JsonSerializer.SerializeToUtf8Bytes(rentedDatas);
         _invalidDataBase64 = JsonSerializer.SerializeToUtf8Bytes(new RentedDataInt() { Data = _data, Id = 256 });
     }
 
     [Benchmark]
     public void Deserialize_Default()
     {
-        using var rentedData = JsonSerializer.Deserialize<RentedData>(_dataBase64)!;
-        if (!rentedData.Data.AsSpan().SequenceEqual(_data))
-            throw new InvalidOperationException(nameof(Deserialize_Default));
+        var rentedDatas = JsonSerializer.Deserialize<RentedData[]>(_dataBase64)!;
+
+        foreach (var rentedData in rentedDatas!)
+        {
+            if (!rentedData.Data.AsSpan().SequenceEqual(_data))
+                throw new InvalidOperationException(nameof(Deserialize_Default));
+
+            rentedData.Dispose();
+        }
     }
 
     [Benchmark]
@@ -68,7 +54,7 @@ public class RentedBase64JsonConverterBenchmark
     {
         try
         {
-            JsonSerializer.Deserialize<RentedData>(_invalidDataBase64);
+            JsonSerializer.Deserialize<RentedData[]>(_invalidDataBase64);
         }
         catch (JsonException)
         {
@@ -80,9 +66,15 @@ public class RentedBase64JsonConverterBenchmark
     [Benchmark]
     public async Task Deserialize_Stream_Default()
     {
-        using var rentedData = await JsonSerializer.DeserializeAsync<RentedData>(new MemoryStream(_dataBase64));
-        if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
-            throw new InvalidOperationException(nameof(Deserialize_Stream_Default));
+        var rentedDatas = await JsonSerializer.DeserializeAsync<RentedData[]>(new MemoryStream(_dataBase64));
+
+        foreach (var rentedData in rentedDatas!)
+        {
+            if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
+                throw new InvalidOperationException(nameof(Deserialize_Stream_Default));
+
+            rentedData.Dispose();
+        }
     }
 
     [Benchmark]
@@ -90,7 +82,7 @@ public class RentedBase64JsonConverterBenchmark
     {
         try
         {
-            await JsonSerializer.DeserializeAsync<RentedData>(new MemoryStream(_invalidDataBase64));
+            await JsonSerializer.DeserializeAsync<RentedData[]>(new MemoryStream(_invalidDataBase64));
         }
         catch (JsonException)
         {
@@ -102,9 +94,15 @@ public class RentedBase64JsonConverterBenchmark
     [Benchmark]
     public void Deserialize_IT()
     {
-        using var rentedData = Json.Deserialize<RentedData>(_dataBase64)!;
-        if (!rentedData.Data.AsSpan().SequenceEqual(_data))
-            throw new InvalidOperationException(nameof(Deserialize_IT));
+        var rentedDatas = Json.Deserialize<RentedData[]>(_dataBase64)!;
+
+        foreach (var rentedData in rentedDatas)
+        {
+            if (!rentedData.Data.AsSpan().SequenceEqual(_data))
+                throw new InvalidOperationException(nameof(Deserialize_IT));
+
+            rentedData.Dispose();
+        }
     }
 
     [Benchmark]
@@ -112,7 +110,7 @@ public class RentedBase64JsonConverterBenchmark
     {
         try
         {
-            Json.Deserialize<RentedData>(_invalidDataBase64);
+            Json.Deserialize<RentedData[]>(_invalidDataBase64);
         }
         catch (JsonException)
         {
@@ -124,9 +122,15 @@ public class RentedBase64JsonConverterBenchmark
     [Benchmark]
     public async Task Deserialize_Stream_IT()
     {
-        using var rentedData = await Json.DeserializeAsync<RentedData>(new MemoryStream(_dataBase64));
-        if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
-            throw new InvalidOperationException(nameof(Deserialize_Stream_IT));
+        var rentedDatas = await Json.DeserializeAsync<RentedData[]>(new MemoryStream(_dataBase64));
+        
+        foreach (var rentedData in rentedDatas!)
+        {
+            if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
+                throw new InvalidOperationException(nameof(Deserialize_Stream_IT));
+
+            rentedData.Dispose();
+        }
     }
 
     [Benchmark]
@@ -134,7 +138,7 @@ public class RentedBase64JsonConverterBenchmark
     {
         try
         {
-            await Json.DeserializeAsync<RentedData>(new MemoryStream(_invalidDataBase64));
+            await Json.DeserializeAsync<RentedData[]>(new MemoryStream(_invalidDataBase64));
         }
         catch (JsonException)
         {
