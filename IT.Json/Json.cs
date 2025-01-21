@@ -11,21 +11,23 @@ public static class Json
 {
     public static TValue? Deserialize<TValue>(ReadOnlySpan<byte> utf8Json, JsonSerializerOptions? options = null)
     {
-        ArrayPoolByteShared.AddToList();
         TValue? value;
+
+        ArrayPoolByteShared.AddToList();
+
         try
         {
             value = JsonSerializer.Deserialize<TValue>(utf8Json, options);
-
-            ArrayPoolByteShared.Clear();
-
-            return value;
         }
         catch
         {
             ArrayPoolByteShared.ReturnAndClear();
             throw;
         }
+
+        ArrayPoolByteShared.Clear();
+
+        return value;
     }
 
     public static async ValueTask<TValue?> DeserializeAsync<TValue>(
@@ -39,23 +41,23 @@ public static class Json
 
         var rentedList = new RentedList();
 
-        var jso = options != null 
-            ? new JsonSerializerOptions(options) 
+        var jso = options != null
+            ? new JsonSerializerOptions(options)
             : new JsonSerializerOptions();
         jso.Converters.Add(rentedList);
 
         try
         {
             value = await JsonSerializer.DeserializeAsync<TValue>(utf8Json, jso, cancellationToken);
-
-            rentedList.Clear();
-
-            return value;
         }
         catch
         {
             rentedList.ReturnAndClear();
             throw;
         }
+
+        rentedList.Clear();
+
+        return value;
     }
 }
