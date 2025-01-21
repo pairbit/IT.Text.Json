@@ -37,7 +37,7 @@ internal static class ArrayPoolByteShared
     public static void ReturnAndClear()
     {
         var list = _list;
-        if (list != null)
+        if (list != null && list.Count > 0)
         {
             foreach (var rented in list)
             {
@@ -51,7 +51,7 @@ internal static class ArrayPoolByteShared
     public static void Clear()
     {
         var list = _list;
-        if (list != null)
+        if (list != null && list.Count > 0)
         {
             list.Clear();
         }
