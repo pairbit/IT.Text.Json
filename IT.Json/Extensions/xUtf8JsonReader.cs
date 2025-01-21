@@ -67,7 +67,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = ArrayPoolShared<byte>.Rent(maxLength);
+            var rented = ArrayPoolByteShared.Rent(maxLength);
 
             DecodeSequence(seq, rented.AsSpan(0, maxLength), out _, out var written);
 
@@ -81,7 +81,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = ArrayPoolShared<byte>.Rent(maxLength);
+            var rented = ArrayPoolByteShared.Rent(maxLength);
 
             DecodeSpan(span, rented.AsSpan(0, maxLength), out _, out var written);
 

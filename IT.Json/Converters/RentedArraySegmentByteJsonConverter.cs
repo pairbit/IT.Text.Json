@@ -26,7 +26,7 @@ public class RentedArraySegmentByteJsonConverter : JsonConverter<ArraySegment<by
     {
         var arraySegment = reader.GetRentedArraySegmentFromBase64(_maxEncodedLength);
 
-        if (!ArrayPoolShared<byte>.IsEnabled)
+        if (!ArrayPoolByteShared.IsEnabled)
         {
             var array = arraySegment.Array;
             if (array != null && array.Length > 0)

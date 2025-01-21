@@ -1,5 +1,4 @@
 ﻿using IT.Json.Converters;
-using IT.Json.Internal;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -68,8 +67,14 @@ internal class Base64JsonConverterTest
         var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
         var str = System.Text.Encoding.UTF8.GetString(bin);
 
-        Test(entityInt.Data, bin);
-        Test(entityInt.Data, bakInt);
+        using var entityCopy = Json.Deserialize<EntityByte>(bin, _jso);
+
+        var copyData = entityCopy!.Data;
+
+        Assert.That(ReferenceEquals(entityInt.Data.Array, copyData.Array), Is.False);
+        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
+
+        Assert.Throws<JsonException>(() => Json.Deserialize<EntityByte>(bakInt, _jso));
     }
 
     [Test]
@@ -83,59 +88,16 @@ internal class Base64JsonConverterTest
         var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
         var str = System.Text.Encoding.UTF8.GetString(bin);
 
-        await TestAsync(entityInt.Data, bin);
-        await TestAsync(entityInt.Data, bakInt);
-    }
-
-    private void Test(ArraySegment<byte> data, byte[] bak)
-    {
-        EntityByte? entityCopy;
-        ArrayPoolShared<byte>.AddToList();
-        try
-        {
-            entityCopy = JsonSerializer.Deserialize<EntityByte>(bak, _jso);
-            ArrayPoolShared<byte>.Clear();
-        }
-        catch (JsonException)
-        {
-            ArrayPoolShared<byte>.ReturnAndClear();
-
-            return;
-        }
-
-        var copyData = entityCopy!.Data;
-        
-        Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
-        Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
-
-        entityCopy.Dispose();
-    }
-
-    private async Task TestAsync(ArraySegment<byte> data, byte[] bak)
-    {
-        EntityByte? entityCopy;
-
-        var rentedList = new RentedList();
-        var jso = new JsonSerializerOptions(_jso);
-        jso.Converters.Add(rentedList);
-
-        try
-        {
-            var stream = new MemoryStream(bak);
-            entityCopy = await JsonSerializer.DeserializeAsync<EntityByte>(stream, jso);
-            rentedList.Clear();
-        }
-        catch (JsonException)
-        {
-            rentedList.ReturnAndClear();
-            return;
-        }
+        var entityCopy = await Json.DeserializeAsync<EntityByte>(new MemoryStream(bin), _jso);
 
         var copyData = entityCopy!.Data;
 
-        Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
-        Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
+        Assert.That(ReferenceEquals(entityInt.Data.Array, copyData.Array), Is.False);
+        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
 
         entityCopy.Dispose();
+
+        Assert.ThrowsAsync<JsonException>(async () =>
+            await Json.DeserializeAsync<EntityByte>(new MemoryStream(bakInt), _jso));
     }
 }
