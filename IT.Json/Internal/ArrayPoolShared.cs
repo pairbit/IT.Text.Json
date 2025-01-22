@@ -8,62 +8,62 @@ namespace IT.Json.Internal;
 internal static class ArrayPoolShared
 {
     [ThreadStatic]
-    private static RentedList? _rentedList;
+    private static RentedList? _list;
 
-    public static bool IsEnabled => _rentedList != null && _rentedList.enabled;
+    public static bool IsEnabled => _list != null && _list.enabled;
 
     public static T[] Rent<T>(int minimumLength)
     {
         var rented = ArrayPool<T>.Shared.Rent(minimumLength);
-        var rentedList = _rentedList;
-        if (rentedList != null && rentedList.enabled)
+        var list = _list;
+        if (list != null && list.enabled)
         {
-            rentedList.Add(new RentedArray(rented, Return<T>));
+            list.Add(new RentedArray(rented, Return<T>));
         }
         return rented;
     }
 
     internal static void AddToList()
     {
-        var rentedList = _rentedList;
-        if (rentedList == null)
+        var list = _list;
+        if (list == null)
         {
-            rentedList = _rentedList = new RentedList();
+            list = _list = new RentedList();
         }
-        rentedList.enabled = true;
+        list.enabled = true;
     }
 
     internal static void ReturnAndClear()
     {
-        var rentedList = _rentedList;
-        if (rentedList != null)
+        var list = _list;
+        if (list != null)
         {
-            if (rentedList.Count > 0)
+            if (list.Count > 0)
             {
 #if NET6_0_OR_GREATER
-                foreach (var rentedArray in System.Runtime.InteropServices.CollectionsMarshal.AsSpan(rentedList))
+                foreach (var rentedArray in System.Runtime.InteropServices.CollectionsMarshal.AsSpan(list))
 #else
-                foreach (var rentedArray in rentedList)
+                foreach (var rentedArray in list)
 #endif
                 {
                     rentedArray.Return(rentedArray.Array);
                 }
-                rentedList.Clear();
+                list.Clear();
             }
-            rentedList.enabled = false;
+            list.enabled = false;
         }
     }
 
     internal static void Clear()
     {
-        var rentedList = _rentedList;
-        if (rentedList != null)
+        var list = _list;
+        if (list != null)
         {
-            if (rentedList.Count > 0)
+            if (list.Count > 0)
             {
-                rentedList.Clear();
+                list.Clear();
             }
-            rentedList.enabled = false;
+            list.enabled = false;
         }
     }
 
@@ -72,15 +72,17 @@ internal static class ArrayPoolShared
         ArrayPool<T>.Shared.Return((T[])array, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());
     }
 
+    delegate void ReturnArray(Array array);
+
     readonly struct RentedArray
     {
         public readonly Array Array;
-        public readonly Action<Array> Return;
+        public readonly ReturnArray Return;
 
-        public RentedArray(Array array, Action<Array> returnToPool)
+        public RentedArray(Array array, ReturnArray returnArray)
         {
             Array = array;
-            Return = returnToPool;
+            Return = returnArray;
         }
     }
 
