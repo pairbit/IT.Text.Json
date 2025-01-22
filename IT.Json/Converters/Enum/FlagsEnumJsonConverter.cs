@@ -143,8 +143,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
             else
             {
-                var pool = ArrayPool<byte>.Shared;
-                var rented = pool.Rent(length);
+                var rented = ArrayPool<byte>.Shared.Rent(length);
                 utf8Value = rented.AsSpan(0, length);
                 try
                 {
@@ -161,7 +160,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 }
                 finally
                 {
-                    pool.Return(rented);
+                    ArrayPool<byte>.Shared.Return(rented);
                 }
             }
 
