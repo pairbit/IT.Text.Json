@@ -23,7 +23,7 @@ internal static class ArrayPoolShared
         return rented;
     }
 
-    internal static void AddToList()
+    internal static void Enable()
     {
         var list = _list;
         if (list == null)

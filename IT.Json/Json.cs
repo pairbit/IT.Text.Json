@@ -17,7 +17,7 @@ public static class Json
     {
         TValue? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -25,11 +25,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -40,7 +40,7 @@ public static class Json
 
         TValue? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -48,11 +48,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -63,7 +63,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -71,11 +71,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -86,7 +86,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -94,11 +94,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -110,7 +110,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -118,11 +118,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -131,7 +131,7 @@ public static class Json
     {
         TValue? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -139,11 +139,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -154,7 +154,7 @@ public static class Json
 
         TValue? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -162,11 +162,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -177,7 +177,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -185,11 +185,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -200,7 +200,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -208,11 +208,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -224,7 +224,7 @@ public static class Json
 
         object? value;
 
-        ArrayPoolByteShared.AddToList();
+        ArrayPoolShared.Enable();
 
         try
         {
@@ -232,11 +232,11 @@ public static class Json
         }
         catch
         {
-            ArrayPoolByteShared.ReturnAndClear();
+            ArrayPoolShared.ReturnAndClear();
             throw;
         }
 
-        ArrayPoolByteShared.Clear();
+        ArrayPoolShared.Clear();
 
         return value;
     }
@@ -278,33 +278,5 @@ public static class Json
         {
             ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
         }
-    }
-
-    public static async ValueTask<TValue?> Slowly_DeserializeAsync<TValue>(Stream utf8Json, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
-    {
-        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
-
-        TValue? value;
-
-        var rentedList = new RentedList();
-
-        var jso = options != null
-            ? new JsonSerializerOptions(options)
-            : new JsonSerializerOptions();
-        jso.Converters.Add(rentedList);
-
-        try
-        {
-            value = await JsonSerializer.DeserializeAsync<TValue>(utf8Json, jso, cancellationToken);
-        }
-        catch
-        {
-            rentedList.ReturnAndClear();
-            throw;
-        }
-
-        rentedList.Clear();
-
-        return value;
     }
 }
