@@ -13,9 +13,9 @@ public class RentedArrayBase64JsonConverterBenchmark
     private static byte[] _dataBase64 = null!;
     private static byte[] _invalidDataBase64 = null!;
 
-    [Params(1024, 80 * 1024, 1024 * 1024)]
+    [Params(1024, 80 * 1024, 1024 * 1024, 16 * 1024 * 1024)]
     public int Length { get; set; } = 80 * 1024;//1MB
-    
+
     [Params(10)]
     public int Count { get; set; } = 10;
 
@@ -41,7 +41,7 @@ public class RentedArrayBase64JsonConverterBenchmark
         //var str = Encoding.UTF8.GetString(_invalidDataBase64);
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void Deserialize_Default()
     {
         var rentedDatas = JsonSerializer.Deserialize<RentedData[]>(_dataBase64)!;
@@ -55,7 +55,7 @@ public class RentedArrayBase64JsonConverterBenchmark
         }
     }
 
-    [Benchmark]
+    //[Benchmark]
     public bool Deserialize_Ex_Default()
     {
         try
@@ -97,7 +97,7 @@ public class RentedArrayBase64JsonConverterBenchmark
         throw new InvalidOperationException(nameof(Deserialize_Stream_Ex_Default));
     }
 
-    [Benchmark]
+    //[Benchmark]
     public void Deserialize_IT()
     {
         var rentedDatas = Json.Deserialize<RentedData[]>(_dataBase64)!;
@@ -111,7 +111,7 @@ public class RentedArrayBase64JsonConverterBenchmark
         }
     }
 
-    [Benchmark]
+    //[Benchmark]
     public bool Deserialize_Ex_IT()
     {
         try
@@ -129,7 +129,7 @@ public class RentedArrayBase64JsonConverterBenchmark
     public async Task Deserialize_Stream_IT()
     {
         var rentedDatas = await Json.DeserializeAsync<RentedData[]>(new MemoryStream(_dataBase64));
-        
+
         foreach (var rentedData in rentedDatas!)
         {
             if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
