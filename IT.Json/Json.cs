@@ -243,6 +243,8 @@ public static class Json
 
     public static async ValueTask<TValue?> DeserializeAsync<TValue>(Stream utf8Json, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
     {
+        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
+
         /*
         if (utf8Json is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var arraySegment))
         {
@@ -272,6 +274,115 @@ public static class Json
                 var seq = builder.Build();
                 var reader = new Utf8JsonReader(seq);
                 return Deserialize<TValue>(ref reader, options);
+            }
+        }
+        finally
+        {
+            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
+        }
+    }
+
+    public static async ValueTask<TValue?> DeserializeAsync<TValue>(Stream utf8Json, JsonTypeInfo<TValue> jsonTypeInfo, CancellationToken cancellationToken = default)
+    {
+        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
+        if (jsonTypeInfo == null) throw new ArgumentNullException(nameof(jsonTypeInfo));
+
+        var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
+        try
+        {
+            await builder.AddAsync(utf8Json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (builder.TryGetSingleMemory(out var memory))
+            {
+                return Deserialize(memory.Span, jsonTypeInfo);
+            }
+            else
+            {
+                var seq = builder.Build();
+                var reader = new Utf8JsonReader(seq);
+                return Deserialize(ref reader, jsonTypeInfo);
+            }
+        }
+        finally
+        {
+            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
+        }
+    }
+
+    public static async ValueTask<object?> DeserializeAsync(Stream utf8Json, Type returnType, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
+        if (returnType == null) throw new ArgumentNullException(nameof(returnType));
+
+        var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
+        try
+        {
+            await builder.AddAsync(utf8Json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (builder.TryGetSingleMemory(out var memory))
+            {
+                return Deserialize(memory.Span, returnType, options);
+            }
+            else
+            {
+                var seq = builder.Build();
+                var reader = new Utf8JsonReader(seq);
+                return Deserialize(ref reader, returnType, options);
+            }
+        }
+        finally
+        {
+            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
+        }
+    }
+
+    public static async ValueTask<object?> DeserializeAsync(Stream utf8Json, JsonTypeInfo jsonTypeInfo, CancellationToken cancellationToken = default)
+    {
+        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
+        if (jsonTypeInfo == null) throw new ArgumentNullException(nameof(jsonTypeInfo));
+
+        var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
+        try
+        {
+            await builder.AddAsync(utf8Json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (builder.TryGetSingleMemory(out var memory))
+            {
+                return Deserialize(memory.Span, jsonTypeInfo);
+            }
+            else
+            {
+                var seq = builder.Build();
+                var reader = new Utf8JsonReader(seq);
+                return Deserialize(ref reader, jsonTypeInfo);
+            }
+        }
+        finally
+        {
+            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
+        }
+    }
+
+    public static async ValueTask<object?> DeserializeAsync(Stream utf8Json, Type returnType, JsonSerializerContext context, CancellationToken cancellationToken = default)
+    {
+        if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
+        if (returnType == null) throw new ArgumentNullException(nameof(returnType));
+        if (context == null) throw new ArgumentNullException(nameof(context));
+
+        var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
+        try
+        {
+            await builder.AddAsync(utf8Json, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (builder.TryGetSingleMemory(out var memory))
+            {
+                return Deserialize(memory.Span, returnType, context);
+            }
+            else
+            {
+                var seq = builder.Build();
+                var reader = new Utf8JsonReader(seq);
+                return Deserialize(ref reader, returnType, context);
             }
         }
         finally
