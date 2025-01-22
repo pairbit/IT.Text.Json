@@ -2,7 +2,6 @@
 using IT.Buffers.Extensions;
 using IT.Json.Internal;
 using System;
-using System.Buffers;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
