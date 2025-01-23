@@ -64,6 +64,12 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
                     typeof(RentedMemoryJsonConverter<>).MakeGenericType(arguments[0]),
                     options, _maxLength);
             }
+            if (typeDefinition == typeof(ReadOnlyMemory<>))
+            {
+                return (JsonConverter?)Activator.CreateInstance(
+                    typeof(RentedReadOnlyMemoryJsonConverter<>).MakeGenericType(arguments[0]),
+                    options, _maxLength);
+            }
         }
 
         throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "Type not supported");
@@ -76,6 +82,7 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
         var typeDefinition = typeToConvert.GetGenericTypeDefinition();
 
         return typeDefinition == typeof(ArraySegment<>) ||
-               typeDefinition == typeof(Memory<>);
+               typeDefinition == typeof(Memory<>) ||
+               typeDefinition == typeof(ReadOnlyMemory<>);
     }
 }

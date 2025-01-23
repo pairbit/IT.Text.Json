@@ -15,7 +15,7 @@ public class CollectionsTest
         public ArraySegment<byte> Bytes { get; set; }
 
         [RentedCollectionJsonConverterFactory(40)]
-        public Memory<int> Ints { get; set; }
+        public ReadOnlyMemory<int> Ints { get; set; }
 
         public void Dispose()
         {
