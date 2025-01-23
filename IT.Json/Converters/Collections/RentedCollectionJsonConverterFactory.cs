@@ -4,6 +4,31 @@ using System.Text.Json.Serialization;
 
 namespace IT.Json.Converters;
 
+public class RentedCollectionJsonConverterFactoryAttribute : JsonConverterAttribute
+{
+    private readonly int _maxLength;
+
+    public RentedCollectionJsonConverterFactoryAttribute() :
+        base(typeof(RentedCollectionJsonConverterFactory))
+    {
+    }
+
+    public RentedCollectionJsonConverterFactoryAttribute(int maxLength)
+    {
+        if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
+
+        _maxLength = maxLength;
+    }
+
+    public override JsonConverter? CreateConverter(Type typeToConvert)
+    {
+        if (!RentedCollectionJsonConverterFactory.CheckType(typeToConvert))
+            throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "Type not supported");
+
+        return new RentedCollectionJsonConverterFactory(_maxLength);
+    }
+}
+
 public class RentedCollectionJsonConverterFactory : JsonConverterFactory
 {
     private readonly int _maxLength;
@@ -15,17 +40,11 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
 
     public RentedCollectionJsonConverterFactory(int maxLength)
     {
+        if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
         _maxLength = maxLength;
     }
 
-    public override bool CanConvert(Type typeToConvert)
-    {
-        if (!typeToConvert.IsGenericType) return false;
-
-        var typeDefinition = typeToConvert.GetGenericTypeDefinition();
-
-        return typeDefinition == typeof(ArraySegment<>);
-    }
+    public override bool CanConvert(Type typeToConvert) => CheckType(typeToConvert);
 
     public override JsonConverter? CreateConverter(Type typeToConvert, JsonSerializerOptions options)
     {
@@ -42,5 +61,14 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
         }
 
         throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "Type not supported");
+    }
+
+    public static bool CheckType(Type typeToConvert)
+    {
+        if (!typeToConvert.IsGenericType) return false;
+
+        var typeDefinition = typeToConvert.GetGenericTypeDefinition();
+
+        return typeDefinition == typeof(ArraySegment<>);
     }
 }

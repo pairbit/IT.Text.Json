@@ -13,6 +13,9 @@ public class RentedArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>
 
     public RentedArraySegmentJsonConverter(JsonSerializerOptions options, int maxLength)
     {
+        if (options == null) throw new ArgumentNullException(nameof(options));
+        if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
+
         _arrayConverter = (JsonConverter<Memory<T>>)options.GetConverter(typeof(Memory<T>));
         _itemConverter = (JsonConverter<T>)options.GetConverter(typeof(T));
         _maxLength = maxLength;

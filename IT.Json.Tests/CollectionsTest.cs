@@ -12,7 +12,7 @@ public class CollectionsTest
         [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
         public ArraySegment<byte> Bytes { get; set; }
 
-        [JsonConverter(typeof(RentedCollectionJsonConverterFactory))]
+        [RentedCollectionJsonConverterFactory(40)]
         public ArraySegment<int> Ints { get; set; }
 
         public void Dispose()

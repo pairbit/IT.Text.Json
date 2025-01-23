@@ -37,6 +37,8 @@ public static class xUtf8JsonReader
                     return new ArraySegment<T>(rented, 0, count);
                 }
 
+                if (count == maxLength) throw new JsonException($"maxLength {maxLength}");
+
                 var item = itemConverter.Read(ref reader, itemType, options);
 
                 if (buffer.Length == count)
