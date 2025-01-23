@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -70,6 +71,12 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
                     typeof(RentedReadOnlyMemoryJsonConverter<>).MakeGenericType(arguments[0]),
                     options, _maxLength);
             }
+            if (typeDefinition == typeof(ReadOnlySequence<>))
+            {
+                return (JsonConverter?)Activator.CreateInstance(
+                    typeof(RentedReadOnlySequenceJsonConverter<>).MakeGenericType(arguments[0]),
+                    options, _maxLength);
+            }
         }
 
         throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "Type not supported");
@@ -83,6 +90,7 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
 
         return typeDefinition == typeof(ArraySegment<>) ||
                typeDefinition == typeof(Memory<>) ||
-               typeDefinition == typeof(ReadOnlyMemory<>);
+               typeDefinition == typeof(ReadOnlyMemory<>) ||
+               typeDefinition == typeof(ReadOnlySequence<>);
     }
 }
