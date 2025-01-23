@@ -1,4 +1,4 @@
-﻿using IT.Json.Internal;
+﻿using IT.Buffers;
 using System;
 using System.Buffers;
 using System.Buffers.Text;
@@ -8,26 +8,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace IT.Json.Extensions;
-
-internal class SequenceSegment<T> : ReadOnlySequenceSegment<T>
-{
-    public SequenceSegment(ReadOnlyMemory<T> memory)
-    {
-        Memory = memory;
-    }
-
-    public SequenceSegment<T> Append(ReadOnlyMemory<T> memory)
-    {
-        var segment = new SequenceSegment<T>(memory)
-        {
-            RunningIndex = RunningIndex + Memory.Length
-        };
-
-        Next = segment;
-
-        return segment;
-    }
-}
 
 public static class xUtf8JsonReader
 {
@@ -65,20 +45,21 @@ public static class xUtf8JsonReader
             {
                 if (count == 0)
                 {
-                    buffer = ArrayPoolShared.Rent<T>(bufferSize);
+                    buffer = Internal.ArrayPoolShared.Rent<T>(bufferSize);
                 }
                 else
                 {
                     if (start == null)
                     {
-                        start = end = new SequenceSegment<T?>(buffer);
+                        start = end = SequenceSegment<T?>.Pool.Rent();
+                        start.SetMemory(buffer, isRented: true);
                     }
                     else
                     {
                         end = end.Append(buffer);
                     }
 
-                    buffer = ArrayPoolShared.Rent<T>(count + 1);
+                    buffer = Internal.ArrayPoolShared.Rent<T>(count + 1);
                     count = 0;
                 }
             }
@@ -107,7 +88,7 @@ public static class xUtf8JsonReader
                 {
                     if (count == 0) return ArraySegment<T>.Empty;
 
-                    var rented = ArrayPoolShared.Rent<T>(buffer.Length);
+                    var rented = Internal.ArrayPoolShared.Rent<T>(buffer.Length);
 
                     buffer.AsSpan(0, count).CopyTo(rented);
 
@@ -210,7 +191,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = ArrayPoolShared.Rent<byte>(maxLength);
+            var rented = Internal.ArrayPoolShared.Rent<byte>(maxLength);
 
             DecodeSequence(seq, rented.AsSpan(0, maxLength), out _, out var written);
 
@@ -224,7 +205,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = ArrayPoolShared.Rent<byte>(maxLength);
+            var rented = Internal.ArrayPoolShared.Rent<byte>(maxLength);
 
             DecodeSpan(span, rented.AsSpan(0, maxLength), out _, out var written);
 
@@ -424,6 +405,18 @@ public static class xUtf8JsonReader
     private static JsonException InvalidLength() => new("Base64 length is invalid");
 
     private static JsonException EscapingNotSupported() => new("Base64 escaping is not supported");
+
+    private static SequenceSegment<T?> Append<T>(this SequenceSegment<T?> segment, ReadOnlyMemory<T?> memory)
+    {
+        var next = SequenceSegment<T?>.Pool.Rent();
+
+        next.SetMemory(memory, true);
+        next.RunningIndex = segment.RunningIndex + segment.Memory.Length;
+
+        segment.Next = next;
+
+        return next;
+    }
 
     private static IMemoryOwner<byte> Slice(this IMemoryOwner<byte> memoryOwner, int start, int length)
     {

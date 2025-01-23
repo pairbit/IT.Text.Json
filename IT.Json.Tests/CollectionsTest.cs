@@ -1,5 +1,8 @@
-﻿using IT.Json.Converters;
+﻿using IT.Buffers;
+using IT.Buffers.Extensions;
+using IT.Json.Converters;
 using System.Buffers;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -18,10 +21,10 @@ public class CollectionsTest
 
         public void Dispose()
         {
-            //Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
+            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
             Bytes = default;
 
-            //Debug.Assert(ArrayPoolShared.TryReturnAndClear(Ints));
+            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Ints) > 0);
             Ints = default;
         }
     }
@@ -70,23 +73,8 @@ public class CollectionsTest
     private static bool SequenceEqual<T>(Memory<T> first, ReadOnlySpan<T> second)
         => SequenceEqual((ReadOnlyMemory<T>)first, second);
 
-    public static bool SequenceEqual<T>(ReadOnlySequence<T> first, ReadOnlySpan<T> other, IEqualityComparer<T>? comparer = null)
+    private static bool SequenceEqual<T>(ReadOnlySequence<T> first, ReadOnlySpan<T> other)
     {
-        if (first.IsSingleSegment) return first.FirstSpan.SequenceEqual(other, comparer);
-
-        if (first.Length == other.Length)
-        {
-            var position = first.Start;
-            while (first.TryGet(ref position, out var memory))
-            {
-                var span = memory.Span;
-
-                if (!span.SequenceEqual(other[..span.Length], comparer)) return false;
-
-                other = other[span.Length..];
-            }
-        }
-
-        return true;
+        return first.SequenceEqual(other);
     }
 }
