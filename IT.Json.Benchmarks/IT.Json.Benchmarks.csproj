@@ -3,12 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
+	<LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
 	<NoWarn>$(NoWarn);IDE1006;IDE0049;IDE0290</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+    <PackageReference Include="IT.Buffers" Version="2.0.13" />
   </ItemGroup>
 
   <ItemGroup>

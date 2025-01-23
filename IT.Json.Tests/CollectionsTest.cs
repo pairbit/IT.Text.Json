@@ -1,5 +1,7 @@
-﻿using IT.Json.Converters;
+﻿using IT.Buffers;
+using IT.Json.Converters;
 using System.Buffers;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -13,23 +15,15 @@ public class CollectionsTest
         public ArraySegment<byte> Bytes { get; set; }
 
         [RentedCollectionJsonConverterFactory(40)]
-        public ArraySegment<int> Ints { get; set; }
+        public Memory<int> Ints { get; set; }
 
         public void Dispose()
         {
-            var bytesArray = Bytes.Array;
-            if (bytesArray != null && bytesArray.Length > 0)
-            {
-                Bytes = default;
-                ArrayPool<byte>.Shared.Return(bytesArray);
-            }
+            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
+            Bytes = default;
 
-            var intsArray = Ints.Array;
-            if (intsArray != null && intsArray.Length > 0)
-            {
-                Ints = default;
-                ArrayPool<int>.Shared.Return(intsArray);
-            }
+            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Ints));
+            Ints = default;
         }
     }
 
@@ -49,7 +43,7 @@ public class CollectionsTest
         var rentedEntity = new RentedEntity()
         {
             Bytes = new ArraySegment<byte>(bytes, 0, count),
-            Ints = new ArraySegment<int>(ints, 0, count)
+            Ints = new Memory<int>(ints, 0, count)
         };
 
         var bin = JsonSerializer.SerializeToUtf8Bytes(rentedEntity);
@@ -58,6 +52,6 @@ public class CollectionsTest
         using var rentedEntity2 = Json.Deserialize<RentedEntity>(bin)!;
 
         Assert.That(rentedEntity2.Bytes.AsSpan().SequenceEqual(bytes.AsSpan(0, count)), Is.True);
-        Assert.That(rentedEntity2.Ints.AsSpan().SequenceEqual(ints.AsSpan(0, count)), Is.True);
+        Assert.That(rentedEntity2.Ints.Span.SequenceEqual(ints.AsSpan(0, count)), Is.True);
     }
 }

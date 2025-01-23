@@ -5,14 +5,13 @@ using System.Text.Json.Serialization;
 
 namespace IT.Json.Converters;
 
-//https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/converters-how-to
-public class RentedArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>
+public class RentedMemoryJsonConverter<T> : JsonConverter<Memory<T>>
 {
     private readonly JsonConverter<Memory<T>> _arrayConverter;
     private readonly JsonConverter<T> _itemConverter;
     private readonly int _maxLength;
 
-    public RentedArraySegmentJsonConverter(JsonSerializerOptions options, int maxLength)
+    public RentedMemoryJsonConverter(JsonSerializerOptions options, int maxLength)
     {
         if (options == null) throw new ArgumentNullException(nameof(options));
         if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
@@ -24,20 +23,13 @@ public class RentedArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>
 
     public override bool HandleNull => true;
 
-    public override ArraySegment<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override Memory<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         return reader.GetRentedArraySegment(_itemConverter, options, _maxLength);
     }
 
-    public override void Write(Utf8JsonWriter writer, ArraySegment<T> value, JsonSerializerOptions options)
+    public override void Write(Utf8JsonWriter writer, Memory<T> value, JsonSerializerOptions options)
     {
-        if (value.Array == null)
-        {
-            writer.WriteNullValue();
-        }
-        else
-        {
-            _arrayConverter.Write(writer, value, options);
-        }
+        _arrayConverter.Write(writer, value, options);
     }
 }
