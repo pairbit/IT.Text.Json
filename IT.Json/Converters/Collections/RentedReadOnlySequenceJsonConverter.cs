@@ -37,8 +37,8 @@ public class RentedReadOnlySequenceJsonConverter<T> : JsonConverter<ReadOnlySequ
         }
         else
         {
-            var itemConverter = _itemConverter;
             writer.WriteStartArray();
+            var itemConverter = _itemConverter;
             var position = value.Start;
             while (value.TryGet(ref position, out var memory))
             {

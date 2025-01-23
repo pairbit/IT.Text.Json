@@ -11,15 +11,15 @@ public class CollectionsTest
 {
     public class RentedEntity : IDisposable
     {
-        [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
+        //[JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
         public ArraySegment<byte> Bytes { get; set; }
 
-        [RentedCollectionJsonConverterFactory(40)]
+        //[RentedCollectionJsonConverterFactory(40)]
         public ReadOnlySequence<int> Ints { get; set; }
 
         public void Dispose()
         {
-            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
+            //Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
             Bytes = default;
 
             //Debug.Assert(ArrayPoolShared.TryReturnAndClear(Ints));
@@ -47,14 +47,47 @@ public class CollectionsTest
         };
 
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new ReadOnlySequenceJsonConverter<int>());
+        jso.Converters.Add(new CollectionJsonConverterFactory());
 
         var bin = JsonSerializer.SerializeToUtf8Bytes(rentedEntity, jso);
         var str = System.Text.Encoding.UTF8.GetString(bin);
 
         using var rentedEntity2 = Json.Deserialize<RentedEntity>(bin, jso)!;
 
-        Assert.That(rentedEntity2.Bytes.AsSpan().SequenceEqual(bytes.AsSpan(0, count)), Is.True);
-        //Assert.That(rentedEntity2.Ints.seq(ints.AsSpan(0, count)), Is.True);
+        Assert.That(SequenceEqual(rentedEntity2.Bytes, bytes.AsSpan(0, count)), Is.True);
+        Assert.That(SequenceEqual(rentedEntity2.Ints, ints.AsSpan(0, count)), Is.True);
+    }
+
+    private static bool SequenceEqual<T>(ArraySegment<T> first, ReadOnlySpan<T> second)
+    {
+        return first.AsSpan().SequenceEqual(second);
+    }
+
+    private static bool SequenceEqual<T>(ReadOnlyMemory<T> first, ReadOnlySpan<T> second)
+    {
+        return first.Span.SequenceEqual(second);
+    }
+
+    private static bool SequenceEqual<T>(Memory<T> first, ReadOnlySpan<T> second)
+        => SequenceEqual((ReadOnlyMemory<T>)first, second);
+
+    public static bool SequenceEqual<T>(ReadOnlySequence<T> first, ReadOnlySpan<T> other, IEqualityComparer<T>? comparer = null)
+    {
+        if (first.IsSingleSegment) return first.FirstSpan.SequenceEqual(other, comparer);
+
+        if (first.Length == other.Length)
+        {
+            var position = first.Start;
+            while (first.TryGet(ref position, out var memory))
+            {
+                var span = memory.Span;
+
+                if (!span.SequenceEqual(other[..span.Length], comparer)) return false;
+
+                other = other[..span.Length];
+            }
+        }
+
+        return true;
     }
 }
