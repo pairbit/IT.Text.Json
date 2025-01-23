@@ -4,12 +4,68 @@ using System.Buffers;
 using System.Buffers.Text;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IT.Json.Extensions;
 
 public static class xUtf8JsonReader
 {
     private const byte Pad = (byte)'=';
+
+    public static ArraySegment<T> GetRentedArraySegment<T>(this ref Utf8JsonReader reader,
+        JsonConverter<T> itemConverter, JsonSerializerOptions options, int maxLength)
+    {
+        var tokenType = reader.TokenType;
+        if (tokenType == JsonTokenType.Null) return default;
+        if (tokenType != JsonTokenType.StartArray) throw new JsonException("Expected StartArray");
+
+        T?[] buffer = [];
+        var count = 0;
+        var itemType = typeof(T);
+        try
+        {
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonTokenType.EndArray)
+                {
+                    if (buffer.Length == 0) return ArraySegment<T>.Empty;
+
+                    var rented = ArrayPoolShared.Rent<T>(buffer.Length);
+
+                    buffer.AsSpan(0, count).CopyTo(rented);
+
+                    return new ArraySegment<T>(rented, 0, count);
+                }
+
+                var item = itemConverter.Read(ref reader, itemType, options);
+
+                if (buffer.Length == count)
+                {
+                    var oldBuffer = buffer;
+
+                    buffer = ArrayPool<T>.Shared.Rent(buffer.Length + 1);
+
+                    if (oldBuffer.Length > 0)
+                    {
+                        oldBuffer.AsSpan().CopyTo(buffer);
+
+                        ArrayPool<T?>.Shared.Return(oldBuffer, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+
+                        oldBuffer = null;
+                    }
+                }
+
+                buffer[count++] = item;
+            }
+        }
+        finally
+        {
+            if (buffer.Length > 0)
+                ArrayPool<T?>.Shared.Return(buffer, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+        }
+
+        throw new JsonException("EndArray not found");
+    }
 
     public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
     {

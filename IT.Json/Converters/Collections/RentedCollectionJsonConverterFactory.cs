@@ -6,6 +6,18 @@ namespace IT.Json.Converters;
 
 public class RentedCollectionJsonConverterFactory : JsonConverterFactory
 {
+    private readonly int _maxLength;
+
+    public RentedCollectionJsonConverterFactory()
+    {
+        _maxLength = int.MaxValue;
+    }
+
+    public RentedCollectionJsonConverterFactory(int maxLength)
+    {
+        _maxLength = maxLength;
+    }
+
     public override bool CanConvert(Type typeToConvert)
     {
         if (!typeToConvert.IsGenericType) return false;
@@ -25,7 +37,7 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
             {
                 return (JsonConverter?)Activator.CreateInstance(
                     typeof(RentedArraySegmentJsonConverter<>).MakeGenericType(arguments[0]),
-                    options);
+                    options, _maxLength);
             }
         }
 
