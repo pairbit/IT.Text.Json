@@ -21,7 +21,7 @@ public class ArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>
 
     public override ArraySegment<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        var array = _arrayConverter.Read(ref reader, typeToConvert, options);
+        var array = _arrayConverter.Read(ref reader, typeof(T[]), options);
         return array == null ? default : new ArraySegment<T>(array);
     }
 

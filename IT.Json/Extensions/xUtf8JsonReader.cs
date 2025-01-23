@@ -2,75 +2,95 @@
 using System;
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace IT.Json.Extensions;
 
+internal class SequenceSegment<T> : ReadOnlySequenceSegment<T>
+{
+    public SequenceSegment(ReadOnlyMemory<T> memory)
+    {
+        Memory = memory;
+    }
+
+    public SequenceSegment<T> Append(ReadOnlyMemory<T> memory)
+    {
+        var segment = new SequenceSegment<T>(memory)
+        {
+            RunningIndex = RunningIndex + Memory.Length
+        };
+
+        Next = segment;
+
+        return segment;
+    }
+}
+
 public static class xUtf8JsonReader
 {
     private const byte Pad = (byte)'=';
 
-    public static ReadOnlySequence<T> GetRentedSequence<T>(this ref Utf8JsonReader reader,
-        JsonConverter<T> itemConverter, JsonSerializerOptions options, int maxLength)
+    public static ReadOnlySequence<T?> GetRentedSequence<T>(this ref Utf8JsonReader reader,
+        JsonConverter<T> itemConverter, JsonSerializerOptions options, long maxLength,
+        int bufferSize = 16)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
         if (tokenType != JsonTokenType.StartArray) throw new JsonException("Expected StartArray");
 
         T?[] buffer = [];
-        var count = 0;
+        SequenceSegment<T?>? start = null;
+        SequenceSegment<T?> end = null!;
+        int count = 0;
         var itemType = typeof(T);
-        try
+        while (reader.Read())
         {
-            while (reader.Read())
+            if (reader.TokenType == JsonTokenType.EndArray)
             {
-                if (reader.TokenType == JsonTokenType.EndArray)
-                {
-                    if (buffer.Length == 0) return ReadOnlySequence<T>.Empty;
+                if (count == 0) return ReadOnlySequence<T?>.Empty;
 
-                    var rented = ArrayPoolShared.Rent<T>(buffer.Length);
+                if (start == null) return new ReadOnlySequence<T?>(buffer, 0, count);
 
-                    buffer.AsSpan(0, count).CopyTo(rented);
-
-                    return new ReadOnlySequence<T>(rented, 0, count);
-                }
-
-                if (count == maxLength) throw new JsonException($"maxLength {maxLength}");
-
-                var item = itemConverter.Read(ref reader, itemType, options);
-
-                if (buffer.Length == count)
-                {
-                    var oldBuffer = buffer;
-
-                    buffer = ArrayPool<T>.Shared.Rent(buffer.Length + 1);
-
-                    if (oldBuffer.Length > 0)
-                    {
-                        oldBuffer.AsSpan().CopyTo(buffer);
-
-                        ArrayPool<T?>.Shared.Return(oldBuffer, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());
-
-                        oldBuffer = null;
-                    }
-                }
-
-                buffer[count++] = item;
+                return new ReadOnlySequence<T?>(start, 0, end.Append(buffer.AsMemory(0, count)), count);
             }
-        }
-        finally
-        {
-            if (buffer.Length > 0)
-                ArrayPool<T?>.Shared.Return(buffer, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+
+            if (0 == maxLength--) throw new JsonException("maxLength");
+
+            var item = itemConverter.Read(ref reader, itemType, options);
+
+            if (buffer.Length == count)
+            {
+                if (count == 0)
+                {
+                    buffer = ArrayPoolShared.Rent<T>(bufferSize);
+                }
+                else
+                {
+                    if (start == null)
+                    {
+                        start = end = new SequenceSegment<T?>(buffer);
+                    }
+                    else
+                    {
+                        end = end.Append(buffer);
+                    }
+
+                    buffer = ArrayPoolShared.Rent<T>(count + 1);
+                    count = 0;
+                }
+            }
+
+            buffer[count++] = item;
         }
 
         throw new JsonException("EndArray not found");
     }
 
     public static ArraySegment<T> GetRentedArraySegment<T>(this ref Utf8JsonReader reader,
-        JsonConverter<T> itemConverter, JsonSerializerOptions options, int maxLength)
+        JsonConverter<T> itemConverter, JsonSerializerOptions options, int maxLength, int bufferSize = 16)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
@@ -85,7 +105,7 @@ public static class xUtf8JsonReader
             {
                 if (reader.TokenType == JsonTokenType.EndArray)
                 {
-                    if (buffer.Length == 0) return ArraySegment<T>.Empty;
+                    if (count == 0) return ArraySegment<T>.Empty;
 
                     var rented = ArrayPoolShared.Rent<T>(buffer.Length);
 
@@ -100,12 +120,20 @@ public static class xUtf8JsonReader
 
                 if (buffer.Length == count)
                 {
-                    var oldBuffer = buffer;
-
-                    buffer = ArrayPool<T>.Shared.Rent(buffer.Length + 1);
-
-                    if (oldBuffer.Length > 0)
+                    if (count == 0)
                     {
+                        buffer = ArrayPool<T>.Shared.Rent(bufferSize);
+
+                        Debug.Assert(buffer.Length >= bufferSize);
+                    }
+                    else
+                    {
+                        var oldBuffer = buffer;
+
+                        buffer = ArrayPool<T>.Shared.Rent(count + 1);
+
+                        Debug.Assert(buffer.Length > oldBuffer.Length);
+
                         oldBuffer.AsSpan().CopyTo(buffer);
 
                         ArrayPool<T?>.Shared.Return(oldBuffer, clearArray: RuntimeHelpers.IsReferenceOrContainsReferences<T>());

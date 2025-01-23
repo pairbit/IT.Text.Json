@@ -1,7 +1,5 @@
-﻿using IT.Buffers;
-using IT.Json.Converters;
+﻿using IT.Json.Converters;
 using System.Buffers;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,10 +9,11 @@ public class CollectionsTest
 {
     public class RentedEntity : IDisposable
     {
-        //[JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
+        [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
+        //[RentedCollectionJsonConverterFactory(70)]
         public ArraySegment<byte> Bytes { get; set; }
 
-        //[RentedCollectionJsonConverterFactory(40)]
+        [RentedCollectionJsonConverterFactory(70)]
         public ReadOnlySequence<int> Ints { get; set; }
 
         public void Dispose()
@@ -30,7 +29,7 @@ public class CollectionsTest
     [Test]
     public void Test()
     {
-        var count = 40;
+        var count = 70;
         var bytes = ArrayPool<byte>.Shared.Rent(count);
         Random.Shared.NextBytes(bytes.AsSpan(0, count));
 
@@ -84,7 +83,7 @@ public class CollectionsTest
 
                 if (!span.SequenceEqual(other[..span.Length], comparer)) return false;
 
-                other = other[..span.Length];
+                other = other[span.Length..];
             }
         }
 
