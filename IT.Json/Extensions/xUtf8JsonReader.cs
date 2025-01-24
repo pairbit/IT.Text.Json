@@ -270,10 +270,10 @@ public static class xUtf8JsonReader
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(in seq, seq.GetPosition(length - 2))];
 
             DecodeSequence(seq, decoded, out var consumed, out var written);
-#if DEBUG
-            System.Diagnostics.Debug.Assert(consumed == length);
-            System.Diagnostics.Debug.Assert(written == decoded.Length);
-#endif
+
+            Debug.Assert(consumed == length);
+            Debug.Assert(written == decoded.Length);
+
             return decoded;
         }
         else
@@ -286,9 +286,9 @@ public static class xUtf8JsonReader
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(span)];
 
             DecodeSpan(span, decoded, out _, out var written);
-#if DEBUG
-            System.Diagnostics.Debug.Assert(written == decoded.Length);
-#endif
+
+            Debug.Assert(written == decoded.Length);
+
             return decoded;
         }
     }
@@ -323,10 +323,10 @@ public static class xUtf8JsonReader
 
                 status = Base64.DecodeFromUtf8(tmpBuffer, bytes, out bytesConsumed, out bytesWritten);
                 if (status != OperationStatus.Done) throw new InvalidOperationException(status.ToString());
-#if DEBUG
-                System.Diagnostics.Debug.Assert(bytesConsumed == tmpBuffer.Length);
-                System.Diagnostics.Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
-#endif
+
+                Debug.Assert(bytesConsumed == tmpBuffer.Length);
+                Debug.Assert(0 < bytesWritten && bytesWritten <= 3);
+
                 consumed += bytesConsumed;
                 written += bytesWritten;
                 bytes = bytes[bytesWritten..];
@@ -341,9 +341,8 @@ public static class xUtf8JsonReader
             remaining = length - bytesConsumed;
             if (remaining > 0)
             {
-#if DEBUG
-                System.Diagnostics.Debug.Assert(remaining < 4);
-#endif
+                Debug.Assert(remaining < 4);
+
                 span[bytesConsumed..].CopyTo(tmpBuffer);
             }
             consumed += bytesConsumed;
@@ -364,9 +363,7 @@ public static class xUtf8JsonReader
 
             throw new InvalidOperationException($"OperationStatus is {status}");
         }
-#if DEBUG
-        System.Diagnostics.Debug.Assert(consumed == utf8.Length);
-#endif
+        Debug.Assert(consumed == utf8.Length);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,6 +2,7 @@
 using IT.Buffers.Extensions;
 using IT.Json.Internal;
 using System;
+using System.Buffers;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,6 +14,36 @@ namespace IT.Json;
 
 public static class Json
 {
+    public static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> sequence, JsonSerializerOptions? options = null)
+    {
+        var reader = new Utf8JsonReader(sequence);
+        return Deserialize<TValue>(ref reader, options);
+    }
+
+    public static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> sequence, JsonTypeInfo<TValue> jsonTypeInfo)
+    {
+        var reader = new Utf8JsonReader(sequence);
+        return Deserialize(ref reader, jsonTypeInfo);
+    }
+
+    public static object? Deserialize(in ReadOnlySequence<byte> sequence, Type returnType, JsonSerializerOptions? options = null)
+    {
+        var reader = new Utf8JsonReader(sequence);
+        return Deserialize(ref reader, returnType, options);
+    }
+
+    public static object? Deserialize(in ReadOnlySequence<byte> sequence, JsonTypeInfo jsonTypeInfo)
+    {
+        var reader = new Utf8JsonReader(sequence);
+        return Deserialize(ref reader, jsonTypeInfo);
+    }
+
+    public static object? Deserialize(in ReadOnlySequence<byte> sequence, Type returnType, JsonSerializerContext context)
+    {
+        var reader = new Utf8JsonReader(sequence);
+        return Deserialize(ref reader, returnType, context);
+    }
+
     public static TValue? Deserialize<TValue>(ref Utf8JsonReader reader, JsonSerializerOptions? options = null)
     {
         TValue? value;
@@ -245,6 +276,7 @@ public static class Json
     {
         if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
 
+        /*
         if (utf8Json is MemoryStream memoryStream && memoryStream.TryGetBuffer(out var arraySegment))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -257,7 +289,7 @@ public static class Json
 
             return value;
         }
-
+        */
 
         var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
         try
@@ -270,9 +302,7 @@ public static class Json
             }
             else
             {
-                var seq = builder.Build();
-                var reader = new Utf8JsonReader(seq);
-                return Deserialize<TValue>(ref reader, options);
+                return Deserialize<TValue>(builder.Build(), options);
             }
         }
         finally
@@ -297,9 +327,7 @@ public static class Json
             }
             else
             {
-                var seq = builder.Build();
-                var reader = new Utf8JsonReader(seq);
-                return Deserialize(ref reader, jsonTypeInfo);
+                return Deserialize(builder.Build(), jsonTypeInfo);
             }
         }
         finally
@@ -324,9 +352,7 @@ public static class Json
             }
             else
             {
-                var seq = builder.Build();
-                var reader = new Utf8JsonReader(seq);
-                return Deserialize(ref reader, returnType, options);
+                return Deserialize(builder.Build(), returnType, options);
             }
         }
         finally
@@ -351,9 +377,7 @@ public static class Json
             }
             else
             {
-                var seq = builder.Build();
-                var reader = new Utf8JsonReader(seq);
-                return Deserialize(ref reader, jsonTypeInfo);
+                return Deserialize(builder.Build(), jsonTypeInfo);
             }
         }
         finally
@@ -379,9 +403,7 @@ public static class Json
             }
             else
             {
-                var seq = builder.Build();
-                var reader = new Utf8JsonReader(seq);
-                return Deserialize(ref reader, returnType, context);
+                return Deserialize(builder.Build(), returnType, context);
             }
         }
         finally

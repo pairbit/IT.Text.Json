@@ -2,7 +2,6 @@
 using IT.Buffers.Extensions;
 using IT.Json.Converters;
 using System.Buffers;
-using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -21,10 +20,10 @@ public class CollectionsTest
 
         public void Dispose()
         {
-            ArrayPoolShared.TryReturnAndClear(Bytes);
+            ArrayPoolShared.TryReturn(Bytes);
             Bytes = default;
 
-            ArrayPoolShared.TryReturnAndClear(Ints);
+            ArrayPoolShared.TryReturn(Ints);
             Ints = default;
         }
     }

@@ -7,6 +7,7 @@ using System.Collections.Concurrent;
 using System.Collections.Frozen;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -133,9 +134,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                 status = TryWrite(ref utf8Value, ref numberValue);
                 if (status)
                 {
-#if DEBUG
-                    System.Diagnostics.Debug.Assert(numberValue == default);
-#endif
+                    Debug.Assert(numberValue == default);
                     var encoded = JsonEncodedText.Encode(utf8Value, _disabledEncoder);
                     writer.WriteStringValue(encoded);
                     _valuesToUtf8Name.TryAdd(value, encoded);
@@ -150,9 +149,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
                     status = TryWrite(ref utf8Value, ref numberValue);
                     if (status)
                     {
-#if DEBUG
-                        System.Diagnostics.Debug.Assert(numberValue == default);
-#endif
+                        Debug.Assert(numberValue == default);
                         var encoded = JsonEncodedText.Encode(utf8Value, _disabledEncoder);
                         writer.WriteStringValue(encoded);
                         _valuesToUtf8Name.TryAdd(value, encoded);
@@ -166,9 +163,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
 
             if (!status)
             {
-#if DEBUG
-                System.Diagnostics.Debug.Assert(numberValue != default);
-#endif
+                Debug.Assert(numberValue != default);
                 throw Unsafe.As<TEnum, TNumber>(ref value) != numberValue ? NotMappedBit(value, numberValue) : NotMapped(value);
             }
         }
