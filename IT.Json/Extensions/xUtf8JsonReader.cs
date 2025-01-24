@@ -1,4 +1,5 @@
 ﻿using IT.Buffers;
+using IT.Json.Internal;
 using System;
 using System.Buffers;
 using System.Buffers.Text;
@@ -45,7 +46,7 @@ public static class xUtf8JsonReader
             {
                 if (count == 0)
                 {
-                    buffer = Internal.ArrayPoolShared.Rent<T>(bufferSize);
+                    buffer = RentedListShared.Rent<T>(bufferSize);
                 }
                 else
                 {
@@ -59,7 +60,7 @@ public static class xUtf8JsonReader
                         end = end.Append(buffer);
                     }
 
-                    buffer = Internal.ArrayPoolShared.Rent<T>(count + 1);
+                    buffer = RentedListShared.Rent<T>(count + 1);
                     count = 0;
                 }
             }
@@ -88,7 +89,7 @@ public static class xUtf8JsonReader
                 {
                     if (count == 0) return ArraySegment<T>.Empty;
 
-                    var rented = Internal.ArrayPoolShared.Rent<T>(buffer.Length);
+                    var rented = RentedListShared.Rent<T>(buffer.Length);
 
                     buffer.AsSpan(0, count).CopyTo(rented);
 
@@ -191,7 +192,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = Internal.ArrayPoolShared.Rent<byte>(maxLength);
+            var rented = RentedListShared.Rent<byte>(maxLength);
 
             DecodeSequence(seq, rented.AsSpan(0, maxLength), out _, out var written);
 
@@ -205,7 +206,7 @@ public static class xUtf8JsonReader
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
-            var rented = Internal.ArrayPoolShared.Rent<byte>(maxLength);
+            var rented = RentedListShared.Rent<byte>(maxLength);
 
             DecodeSpan(span, rented.AsSpan(0, maxLength), out _, out var written);
 

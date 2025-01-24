@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 
 namespace IT.Json.Internal;
 
-internal static class ArrayPoolShared
+internal static class RentedListShared
 {
     [ThreadStatic]
     private static RentedList? _list;
