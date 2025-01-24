@@ -124,7 +124,7 @@ public class RentedBase64JsonConverterBenchmark
     [Benchmark]
     public async Task Deserialize_Stream_IT()
     {
-        using var rentedData = await xJson.DeserializeAsync<RentedData>(new MemoryStream(_dataBase64));
+        using var rentedData = await Json.DeserializeAsync<RentedData>(new MemoryStream(_dataBase64));
         if (!rentedData!.Data.AsSpan().SequenceEqual(_data))
             throw new InvalidOperationException(nameof(Deserialize_Stream_IT));
     }
@@ -134,7 +134,7 @@ public class RentedBase64JsonConverterBenchmark
     {
         try
         {
-            await xJson.DeserializeAsync<RentedData>(new MemoryStream(_invalidDataBase64));
+            await Json.DeserializeAsync<RentedData>(new MemoryStream(_invalidDataBase64));
         }
         catch (JsonException)
         {

@@ -1,8 +1,13 @@
-﻿using IT.Json.Internal;
+﻿using IT.Buffers;
+using IT.Buffers.Extensions;
+using IT.Json.Internal;
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace IT.Json;
 
@@ -236,8 +241,6 @@ public static class Json
         return value;
     }
 
-    /*
-
     public static async ValueTask<TValue?> DeserializeAsync<TValue>(Stream utf8Json, JsonSerializerOptions? options = null, CancellationToken cancellationToken = default)
     {
         if (utf8Json == null) throw new ArgumentNullException(nameof(utf8Json));
@@ -251,10 +254,10 @@ public static class Json
             var value = Deserialize<TValue>(span, options);
 
             memoryStream.Seek(span.Length, SeekOrigin.Current);
-            
+
             return value;
         }
-        
+
 
         var builder = ReadOnlySequenceBuilder<byte>.Pool.Rent();
         try
@@ -386,6 +389,4 @@ public static class Json
             ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
         }
     }
-
-    */
 }
