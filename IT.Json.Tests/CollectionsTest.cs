@@ -21,10 +21,10 @@ public class CollectionsTest
 
         public void Dispose()
         {
-            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Bytes));
+            ArrayPoolShared.TryReturnAndClear(Bytes);
             Bytes = default;
 
-            Debug.Assert(ArrayPoolShared.TryReturnAndClear(Ints) > 0);
+            ArrayPoolShared.TryReturnAndClear(Ints);
             Ints = default;
         }
     }

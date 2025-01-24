@@ -22,7 +22,6 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <DebugType>full</DebugType>
-    <NoWarn>$(NoWarn);IDE1006;IDE0049;IDE0290;CA1510</NoWarn>
 	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -32,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="IT.Buffers" Version="2.0.15" />
+	<PackageReference Include="IT.Buffers" Version="2.0.16" />
 	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
 	<PackageReference Include="System.IO.Hashing" Version="8.0.0" />
 	<PackageReference Include="System.Text.Json" Version="8.0.5" />
