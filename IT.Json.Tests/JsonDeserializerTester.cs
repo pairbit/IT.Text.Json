@@ -93,7 +93,7 @@ public class JsonDeserializerTester
         }
         finally
         {
-            ReadOnlySequenceBuilder<byte>.Pool.Return(builder);
+            BufferPool.TryReturn(builder);
         }
     }
 

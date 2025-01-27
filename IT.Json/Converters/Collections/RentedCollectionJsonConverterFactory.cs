@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IT.Buffers;
+using System;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,18 +8,21 @@ namespace IT.Json.Converters;
 
 public class RentedCollectionJsonConverterFactoryAttribute : JsonConverterAttribute
 {
-    private readonly int _maxLength;
+    private readonly long _maxLength;
+    private readonly int _bufferSize;
 
     public RentedCollectionJsonConverterFactoryAttribute() :
         base(typeof(RentedCollectionJsonConverterFactory))
     {
     }
 
-    public RentedCollectionJsonConverterFactoryAttribute(int maxLength)
+    public RentedCollectionJsonConverterFactoryAttribute(long maxLength, int bufferSize = BufferSize.KB_64)
     {
         if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
+        if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
 
         _maxLength = maxLength;
+        _bufferSize = bufferSize;
     }
 
     public override JsonConverter? CreateConverter(Type typeToConvert)
@@ -26,23 +30,27 @@ public class RentedCollectionJsonConverterFactoryAttribute : JsonConverterAttrib
         if (!RentedCollectionJsonConverterFactory.CheckType(typeToConvert))
             throw new ArgumentOutOfRangeException(nameof(typeToConvert), typeToConvert, "Type not supported");
 
-        return new RentedCollectionJsonConverterFactory(_maxLength);
+        return new RentedCollectionJsonConverterFactory(_maxLength, _bufferSize);
     }
 }
 
 public class RentedCollectionJsonConverterFactory : JsonConverterFactory
 {
-    private readonly int _maxLength;
+    private readonly long _maxLength;
+    private readonly int _bufferSize;
 
     public RentedCollectionJsonConverterFactory()
     {
-        _maxLength = int.MaxValue;
+        _maxLength = long.MaxValue;
     }
 
-    public RentedCollectionJsonConverterFactory(int maxLength)
+    public RentedCollectionJsonConverterFactory(long maxLength, int bufferSize = BufferSize.KB_64)
     {
         if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
+        if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
+
         _maxLength = maxLength;
+        _bufferSize = bufferSize;
     }
 
     public override bool CanConvert(Type typeToConvert) => CheckType(typeToConvert);
@@ -57,25 +65,25 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
             {
                 return (JsonConverter?)Activator.CreateInstance(
                     typeof(RentedArraySegmentJsonConverter<>).MakeGenericType(arguments[0]),
-                    options, _maxLength);
+                    options, GetMaxLength());
             }
             if (typeDefinition == typeof(Memory<>))
             {
                 return (JsonConverter?)Activator.CreateInstance(
                     typeof(RentedMemoryJsonConverter<>).MakeGenericType(arguments[0]),
-                    options, _maxLength);
+                    options, GetMaxLength());
             }
             if (typeDefinition == typeof(ReadOnlyMemory<>))
             {
                 return (JsonConverter?)Activator.CreateInstance(
                     typeof(RentedReadOnlyMemoryJsonConverter<>).MakeGenericType(arguments[0]),
-                    options, _maxLength);
+                    options, GetMaxLength());
             }
             if (typeDefinition == typeof(ReadOnlySequence<>))
             {
                 return (JsonConverter?)Activator.CreateInstance(
                     typeof(RentedReadOnlySequenceJsonConverter<>).MakeGenericType(arguments[0]),
-                    options, _maxLength);
+                    options, _maxLength, _bufferSize);
             }
         }
 
@@ -92,5 +100,12 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
                typeDefinition == typeof(Memory<>) ||
                typeDefinition == typeof(ReadOnlyMemory<>) ||
                typeDefinition == typeof(ReadOnlySequence<>);
+    }
+
+    private int GetMaxLength()
+    {
+        if (_maxLength >= int.MaxValue) return int.MaxValue;
+
+        return (int)_maxLength;
     }
 }
