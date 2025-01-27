@@ -32,11 +32,15 @@ public static class xUtf8JsonReader
         {
             if (reader.TokenType == JsonTokenType.EndArray)
             {
-                if (count == 0) return ReadOnlySequence<T?>.Empty;
+                if (start == null)
+                {
+                    Debug.Assert(count == 0);
+                    return ReadOnlySequence<T?>.Empty;
+                }
 
-                if (start == null) return new ReadOnlySequence<T?>(buffer, 0, count);
+                Debug.Assert(count > 0);
 
-                return new ReadOnlySequence<T?>(start, 0, end.Append(buffer.AsMemory(0, count)), count);
+                return new ReadOnlySequence<T?>(start, 0, end, count);
             }
 
             if (0 == maxLength--) throw new JsonException("maxLength");
@@ -45,23 +49,22 @@ public static class xUtf8JsonReader
 
             if (buffer.Length == count)
             {
-                if (count == 0)
+                if (start == null)
                 {
+                    Debug.Assert(count == 0);
+
                     buffer = RentedListShared.Rent<T>(bufferSize);
+
+                    start = end = SequenceSegment<T?>.Pool.Rent();
+                    start.SetMemory(buffer, isRented: true);
                 }
                 else
                 {
-                    if (start == null)
-                    {
-                        start = end = SequenceSegment<T?>.Pool.Rent();
-                        start.SetMemory(buffer, isRented: true);
-                    }
-                    else
-                    {
-                        end = end.AppendRented(buffer, isRented: true);
-                    }
+                    Debug.Assert(count > 0);
 
                     buffer = RentedListShared.Rent<T>(count + 1);
+
+                    end = end.AppendRented(buffer, isRented: true);
                     count = 0;
                 }
             }

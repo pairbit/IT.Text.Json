@@ -17,7 +17,7 @@ public class CollectionsTest
         //[RentedCollectionJsonConverterFactory(70)]
         public ArraySegment<byte> Bytes { get; set; }
 
-        [RentedCollectionJsonConverterFactory(MAX)]
+        [RentedCollectionJsonConverterFactory(MAX, 32)]
         public ReadOnlySequence<int> Ints { get; set; }
 
         public void Dispose()
@@ -25,7 +25,8 @@ public class CollectionsTest
             BufferPool.TryReturn(Bytes);
             Bytes = default;
 
-            BufferPool.TryReturn(Ints);
+            var count = BufferPool.TryReturn(Ints);
+            Assert.That(count > 0, Is.True);
             Ints = default;
         }
     }
@@ -42,7 +43,7 @@ public class CollectionsTest
         {
             ints[i] = Random.Shared.Next(1000, short.MaxValue);
         }
-        var intSeq = ints.AsMemory(0, count).SplitAndRent(128, isRented: true);
+        var intSeq = ints.AsMemory(0, count).SplitAndRent(16, isRented: true);
         using var rentedEntity = new RentedEntity()
         {
             Bytes = new ArraySegment<byte>(bytes, 0, count),
