@@ -27,5 +27,8 @@ dotnet_diagnostic.IDE0270.severity = none
 # IDE0290: Use primary constructor
 dotnet_diagnostic.IDE0290.severity = none
 
+# IDE0301: Simplify collection initialization
+dotnet_diagnostic.IDE0301.severity = none
+
 # IDE1006: Naming Styles
 dotnet_diagnostic.IDE1006.severity = none

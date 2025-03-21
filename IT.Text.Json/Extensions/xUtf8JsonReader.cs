@@ -151,6 +151,7 @@ public static class xUtf8JsonReader
         {
             var seq = reader.ValueSequence;
             var longLength = seq.Length;
+            if (longLength == 0) return null;
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
@@ -167,6 +168,7 @@ public static class xUtf8JsonReader
         {
             var span = reader.ValueSpan;
             var length = span.Length;
+            if (length == 0) return null;
             if (length > maxEncodedLength) throw TooLong();
             if (length % 4 != 0) throw InvalidLength();
 
@@ -190,6 +192,7 @@ public static class xUtf8JsonReader
         {
             var seq = reader.ValueSequence;
             var longLength = seq.Length;
+            if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
@@ -206,6 +209,7 @@ public static class xUtf8JsonReader
         {
             var span = reader.ValueSpan;
             var length = span.Length;
+            if (length == 0) return ArraySegment<byte>.Empty;
             if (length > maxEncodedLength) throw TooLong();
             if (length % 4 != 0) throw InvalidLength();
 
@@ -229,6 +233,7 @@ public static class xUtf8JsonReader
         {
             var seq = reader.ValueSequence;
             var longLength = seq.Length;
+            if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
@@ -244,6 +249,7 @@ public static class xUtf8JsonReader
         {
             var span = reader.ValueSpan;
             var length = span.Length;
+            if (length == 0) return ArraySegment<byte>.Empty;
             if (length > maxEncodedLength) throw TooLong();
             if (length % 4 != 0) throw InvalidLength();
 
@@ -266,6 +272,7 @@ public static class xUtf8JsonReader
         {
             var seq = reader.ValueSequence;
             var longLength = seq.Length;
+            if (longLength == 0) return Array.Empty<byte>();
             if (longLength > maxEncodedLength) throw TooLong();
 
             var length = (int)longLength;
@@ -284,6 +291,7 @@ public static class xUtf8JsonReader
         {
             var span = reader.ValueSpan;
             var length = span.Length;
+            if (length == 0) return Array.Empty<byte>();
             if (length > maxEncodedLength) throw TooLong();
             if (length % 4 != 0) throw InvalidLength();
 
