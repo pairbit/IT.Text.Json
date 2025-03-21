@@ -35,7 +35,14 @@ internal class Base64JsonConverterTest
             if (dataArray != null && dataArray.Length > 0)
             {
                 Data = default;
-                ArrayPool<byte>.Shared.Return(dataArray);
+                try
+                {
+                    ArrayPool<byte>.Shared.Return(dataArray);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
     }
@@ -56,7 +63,14 @@ internal class Base64JsonConverterTest
             if (dataArray != null && dataArray.Length > 0)
             {
                 Data = default;
-                ArrayPool<byte>.Shared.Return(dataArray);
+                try
+                {
+                    ArrayPool<byte>.Shared.Return(dataArray);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
     }
