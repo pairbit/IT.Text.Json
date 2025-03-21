@@ -1,5 +1,6 @@
 ﻿using IT.Text.Json.Internal;
 using System;
+using System.Buffers;
 using System.Buffers.Text;
 using System.Diagnostics;
 using System.Text;
@@ -15,6 +16,11 @@ public static partial class Json
 
         var result = TryUnescape(source, destination, out written);
         Debug.Assert(result);
+    }
+
+    public static bool TryUnescape(in ReadOnlySequence<byte> source, Span<byte> destination, out int written)
+    {
+        throw new NotImplementedException();
     }
 
     public static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)

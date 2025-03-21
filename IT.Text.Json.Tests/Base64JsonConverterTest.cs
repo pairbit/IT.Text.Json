@@ -85,7 +85,7 @@ internal class Base64JsonConverterTest
     public Task RawTest() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray(), "qwerty"u8.ToArray());
 
     [Test]
-    public Task EscapedRawTest() => Test("{\"Data\":\"!\\\"qwerty\\\"\",\"Id\":32767}"u8.ToArray(), "qwerty"u8.ToArray());
+    public Task EscapedRawTest() => Test("{\"Data\":\"!\\\"qwerty\\\"\",\"Id\":32767}"u8.ToArray(), "\"qwerty\""u8.ToArray());
 
     private static async Task Test(byte[] entityIntUtf8, byte[] dataValid)
     {
