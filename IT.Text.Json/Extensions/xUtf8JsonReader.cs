@@ -214,6 +214,10 @@ public static class xUtf8JsonReader
                 length--;
                 var raw = RentedListShared.Rent<byte>(length);
                 seq.Slice(1).CopyTo(raw);
+                if (reader.ValueIsEscaped)
+                {
+                    //Json.TryUnescape(raw.AsSpan(0, length),)
+                }
                 return new ArraySegment<byte>(raw, 0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();

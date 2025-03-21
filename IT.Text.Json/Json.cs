@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace IT.Text.Json;
 
-public static class Json
+public static partial class Json
 {
     public static TValue? Deserialize<TValue>(in ReadOnlySequence<byte> sequence, JsonSerializerOptions? options = null)
     {
