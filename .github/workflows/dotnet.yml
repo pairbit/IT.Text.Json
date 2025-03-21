@@ -26,22 +26,22 @@ jobs:
             8.0.x
     
       - name: Restore
-        run: dotnet restore IT.Json.sln
+        run: dotnet restore IT.Text.Json.sln
     
       - name: Build
-        run: dotnet build IT.Json.sln --configuration Release --no-restore 
+        run: dotnet build IT.Text.Json.sln --configuration Release --no-restore 
     
       - name: Test
-        run: dotnet test IT.Json.Tests/IT.Json.Tests.csproj --configuration Release --no-restore
+        run: dotnet test IT.Text.Json.Tests/IT.Text.Json.Tests.csproj --configuration Release --no-restore
 
   publish:
     needs: [build]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Publish IT.Json
+      - name: Publish IT.Text.Json
         uses: pairbit/publish-nuget@v2.6.1
         with:
-            PROJECT_FILE_PATH: IT.Json/IT.Json.csproj
+            PROJECT_FILE_PATH: IT.Text.Json/IT.Text.Json.csproj
             NUGET_KEY: ${{secrets.NUGET}}
             TAG_COMMIT: true
