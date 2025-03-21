@@ -1,8 +1,7 @@
 ﻿#if !NET
-using System;
 using System.Runtime.CompilerServices;
 
-namespace IT.Text.Json.Internal;
+namespace System.Text;
 
 internal readonly struct Rune
 {

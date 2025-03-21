@@ -2,6 +2,7 @@
 using System;
 using System.Buffers.Text;
 using System.Diagnostics;
+using System.Text;
 
 namespace IT.Text.Json;
 
