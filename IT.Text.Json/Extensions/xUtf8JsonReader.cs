@@ -157,7 +157,14 @@ public static class xUtf8JsonReader
             {
                 length--;
                 var raw = MemoryPool<byte>.Shared.Rent(length);
-                seq.Slice(1).CopyTo(raw.Memory.Span);
+                if (reader.ValueIsEscaped)
+                {
+                    Json.UnsafeUnescape(seq.Slice(1), raw.Memory.Span, out length);
+                }
+                else
+                {
+                    seq.Slice(1).CopyTo(raw.Memory.Span);
+                }
                 return raw.Slice(0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();
@@ -181,7 +188,14 @@ public static class xUtf8JsonReader
             {
                 length--;
                 var raw = MemoryPool<byte>.Shared.Rent(length);
-                span.Slice(1).CopyTo(raw.Memory.Span);
+                if (reader.ValueIsEscaped)
+                {
+                    Json.UnsafeUnescape(span.Slice(1), raw.Memory.Span, out length);
+                }
+                else
+                {
+                    span.Slice(1).CopyTo(raw.Memory.Span);
+                }
                 return raw.Slice(0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();
@@ -215,7 +229,7 @@ public static class xUtf8JsonReader
                 var raw = RentedListShared.Rent<byte>(length);
                 if (reader.ValueIsEscaped)
                 {
-                    Json.TryUnescape(seq.Slice(1), raw, out length);
+                    Json.UnsafeUnescape(seq.Slice(1), raw, out length);
                 }
                 else
                 {
@@ -246,7 +260,7 @@ public static class xUtf8JsonReader
                 var raw = RentedListShared.Rent<byte>(length);
                 if (reader.ValueIsEscaped)
                 {
-                    Json.TryUnescape(span.Slice(1), raw, out length);
+                    Json.UnsafeUnescape(span.Slice(1), raw, out length);
                 }
                 else
                 {
@@ -281,9 +295,17 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
-                var raw = new byte[length - 1];
-                seq.Slice(1).CopyTo(raw);
-                return raw;
+                length--;
+                var raw = new byte[length];
+                if (reader.ValueIsEscaped)
+                {
+                    Json.UnsafeUnescape(seq.Slice(1), raw, out length);
+                }
+                else
+                {
+                    seq.Slice(1).CopyTo(raw);
+                }
+                return new ArraySegment<byte>(raw, 0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
@@ -303,9 +325,17 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && span[0] == rawToken)
             {
-                var raw = new byte[length - 1];
-                span.Slice(1).CopyTo(raw);
-                return raw;
+                length--;
+                var raw = new byte[length];
+                if (reader.ValueIsEscaped)
+                {
+                    Json.UnsafeUnescape(span.Slice(1), raw, out length);
+                }
+                else
+                {
+                    span.Slice(1).CopyTo(raw);
+                }
+                return new ArraySegment<byte>(raw, 0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
@@ -333,6 +363,7 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
+                if (reader.ValueIsEscaped) throw EscapingNotSupported();
                 var raw = new byte[length - 1];
                 seq.Slice(1).CopyTo(raw);
                 return raw;
@@ -358,6 +389,7 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && span[0] == rawToken)
             {
+                if (reader.ValueIsEscaped) throw EscapingNotSupported();
                 var raw = new byte[length - 1];
                 span.Slice(1).CopyTo(raw);
                 return raw;

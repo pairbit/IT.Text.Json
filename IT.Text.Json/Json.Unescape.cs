@@ -18,6 +18,18 @@ public static partial class Json
         Debug.Assert(result);
     }
 
+    public static void UnsafeUnescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
+    {
+        var result = TryUnescape(source, destination, out written);
+        Debug.Assert(result);
+    }
+
+    public static void UnsafeUnescape(in ReadOnlySequence<byte> source, Span<byte> destination, out int written)
+    {
+        var result = TryUnescape(source, destination, out written);
+        Debug.Assert(result);
+    }
+
     public static bool TryUnescape(in ReadOnlySequence<byte> source, Span<byte> destination, out int written)
     {
         throw new NotImplementedException();
