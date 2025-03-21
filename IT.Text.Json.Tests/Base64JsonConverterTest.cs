@@ -23,7 +23,7 @@ internal class Base64JsonConverterTest
     {
         [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
-        
+
         [JsonIgnore]
         public string DataString => Encoding.UTF8.GetString(Data);
 
@@ -76,21 +76,15 @@ internal class Base64JsonConverterTest
     }
 
     [Test]
-    public void TestEmpty() => Test("{\"Data\":\"\",\"Id\":32767}"u8.ToArray());
+    public Task TestEmpty() => Test("{\"Data\":\"\",\"Id\":32767}"u8.ToArray());
 
     [Test]
-    public Task TestEmptyAsync() => TestAsync("{\"Data\":\"\",\"Id\":32767}"u8.ToArray());
+    public Task Test() => Test("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray());
 
     [Test]
-    public void Test() => Test("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray());
+    public Task TestRaw() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray());
 
-    [Test]
-    public Task TestAsync() => TestAsync("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray());
-
-    [Test]
-    public void TestRaw() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray());
-
-    private static void Test(byte[] bakInt)
+    private static async Task Test(byte[] bakInt)
     {
         using var entityInt = Json.Deserialize<EntityInt>(bakInt, _jso)!;
 
@@ -109,26 +103,16 @@ internal class Base64JsonConverterTest
         Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
 
         Assert.Throws<JsonException>(() => Json.Deserialize<EntityByte>(bakInt, _jso));
-    }
 
-    private static async Task TestAsync(byte[] bakInt)
-    {
-        using var entityInt = Json.Deserialize<EntityInt>(bakInt, _jso)!;
+        //async
+        using var entityCopy2 = await Json.DeserializeAsync<EntityByte>(new MemoryStream(bin), _jso);
 
-        var entity = new EntityByte() { Id = 1, Data = entityInt.Data };
+        var copyData2 = entityCopy2!.Data;
 
-        var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
-        var str = Encoding.UTF8.GetString(bin);
+        if (copyData2.Count > 0)
+            Assert.That(ReferenceEquals(entityInt.Data.Array, copyData2.Array), Is.False);
 
-        var entityCopy = await Json.DeserializeAsync<EntityByte>(new MemoryStream(bin), _jso);
-
-        var copyData = entityCopy!.Data;
-
-        if (copyData.Count > 0)
-            Assert.That(ReferenceEquals(entityInt.Data.Array, copyData.Array), Is.False);
-        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
-
-        entityCopy.Dispose();
+        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData2.AsSpan()), Is.True);
 
         Assert.ThrowsAsync<JsonException>(async () =>
             await Json.DeserializeAsync<EntityByte>(new MemoryStream(bakInt), _jso));
