@@ -2,7 +2,7 @@
 
 namespace IT.Text.Json.Extensions;
 
-public static class xJsonSerializerOptions
+internal static class xJsonSerializerOptions
 {
     public static void Init(this JsonSerializerOptions jso, JsonSerializerOptions options)
     {

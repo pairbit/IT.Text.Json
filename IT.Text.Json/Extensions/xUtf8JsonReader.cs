@@ -140,7 +140,7 @@ public static class xUtf8JsonReader
         throw new JsonException("EndArray not found");
     }
 
-    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
+    public static IMemoryOwner<byte>? GetMemoryOwnerFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, byte rawToken = 0)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
@@ -181,7 +181,7 @@ public static class xUtf8JsonReader
         }
     }
 
-    public static ArraySegment<byte> GetRentedArraySegmentFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
+    public static ArraySegment<byte> GetRentedArraySegmentFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, byte rawToken = 0)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
@@ -222,7 +222,7 @@ public static class xUtf8JsonReader
         }
     }
 
-    public static ArraySegment<byte> GetArraySegmentFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
+    public static ArraySegment<byte> GetArraySegmentFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, byte rawToken = 0)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
@@ -261,7 +261,7 @@ public static class xUtf8JsonReader
         }
     }
 
-    public static byte[]? GetArrayFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength)
+    public static byte[]? GetArrayFromBase64(this ref Utf8JsonReader reader, int maxEncodedLength, byte rawToken = 0)
     {
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
