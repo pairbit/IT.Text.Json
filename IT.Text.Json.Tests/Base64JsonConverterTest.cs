@@ -76,22 +76,25 @@ internal class Base64JsonConverterTest
     }
 
     [Test]
-    public Task EmptyTest() => Test("{\"Data\":\"\",\"Id\":32767}"u8.ToArray());
+    public Task EmptyTest() => Test("{\"Data\":\"\",\"Id\":32767}"u8.ToArray(), []);
 
     [Test]
-    public Task Base64Test() => Test("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray());
+    public Task Base64Test() => Test("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray(), "qwerty"u8.ToArray());
 
     [Test]
-    public Task RawTest() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray());
+    public Task RawTest() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray(), "qwerty"u8.ToArray());
 
     [Test]
-    public Task EscapedRawTest() => Test("{\"Data\":\"!\\\"qwerty\\\"\",\"Id\":32767}"u8.ToArray());
+    public Task EscapedRawTest() => Test("{\"Data\":\"!\\\"qwerty\\\"\",\"Id\":32767}"u8.ToArray(), "qwerty"u8.ToArray());
 
-    private static async Task Test(byte[] entityIntUtf8)
+    private static async Task Test(byte[] entityIntUtf8, byte[] dataValid)
     {
         using var entityInt = Json.Deserialize<EntityInt>(entityIntUtf8, _jso)!;
 
-        var entity = new EntityByte() { Id = 1, Data = entityInt.Data };
+        var data = entityInt.Data;
+        Assert.That(data.AsSpan().SequenceEqual(dataValid), Is.True);
+
+        var entity = new EntityByte() { Id = 1, Data = data };
 
         var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
         var str = Encoding.UTF8.GetString(bin);
@@ -101,9 +104,9 @@ internal class Base64JsonConverterTest
         var copyData = entityByte!.Data;
 
         if (copyData.Count > 0)
-            Assert.That(ReferenceEquals(entityInt.Data.Array, copyData.Array), Is.False);
+            Assert.That(ReferenceEquals(data.Array, copyData.Array), Is.False);
 
-        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
+        Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
 
         Assert.Throws<JsonException>(() => Json.Deserialize<EntityByte>(entityIntUtf8, _jso));
 
@@ -113,9 +116,9 @@ internal class Base64JsonConverterTest
         var copyData2 = entityByte2!.Data;
 
         if (copyData2.Count > 0)
-            Assert.That(ReferenceEquals(entityInt.Data.Array, copyData2.Array), Is.False);
+            Assert.That(ReferenceEquals(data.Array, copyData2.Array), Is.False);
 
-        Assert.That(entityInt.Data.AsSpan().SequenceEqual(copyData2.AsSpan()), Is.True);
+        Assert.That(data.AsSpan().SequenceEqual(copyData2.AsSpan()), Is.True);
 
         Assert.ThrowsAsync<JsonException>(async () =>
             await Json.DeserializeAsync<EntityByte>(new MemoryStream(entityIntUtf8), _jso));
