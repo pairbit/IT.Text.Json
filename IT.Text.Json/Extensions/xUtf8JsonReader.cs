@@ -145,8 +145,6 @@ public static class xUtf8JsonReader
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
         if (tokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw EscapingNotSupported();
-
         if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
@@ -162,7 +160,7 @@ public static class xUtf8JsonReader
                 seq.Slice(1).CopyTo(raw.Memory.Span);
                 return raw.Slice(0, length);
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -186,7 +184,7 @@ public static class xUtf8JsonReader
                 span.Slice(1).CopyTo(raw.Memory.Span);
                 return raw.Slice(0, length);
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -203,8 +201,6 @@ public static class xUtf8JsonReader
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
         if (tokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw EscapingNotSupported();
-
         if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
@@ -220,7 +216,7 @@ public static class xUtf8JsonReader
                 seq.Slice(1).CopyTo(raw);
                 return new ArraySegment<byte>(raw, 0, length);
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -244,7 +240,7 @@ public static class xUtf8JsonReader
                 span.Slice(1).CopyTo(raw);
                 return new ArraySegment<byte>(raw, 0, length);
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -261,8 +257,6 @@ public static class xUtf8JsonReader
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return default;
         if (tokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw EscapingNotSupported();
-
         if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
@@ -277,7 +271,7 @@ public static class xUtf8JsonReader
                 seq.Slice(1).CopyTo(raw);
                 return raw;
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[(length >> 2) * 3];
@@ -299,7 +293,7 @@ public static class xUtf8JsonReader
                 span.Slice(1).CopyTo(raw);
                 return raw;
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[(length >> 2) * 3];
@@ -315,8 +309,6 @@ public static class xUtf8JsonReader
         var tokenType = reader.TokenType;
         if (tokenType == JsonTokenType.Null) return null;
         if (tokenType != JsonTokenType.String) throw NotString();
-        if (reader.ValueIsEscaped) throw EscapingNotSupported();
-
         if (reader.HasValueSequence)
         {
             var seq = reader.ValueSequence;
@@ -331,7 +323,7 @@ public static class xUtf8JsonReader
                 seq.Slice(1).CopyTo(raw);
                 return raw;
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(seq, seq.GetPosition(length - 2))];
@@ -356,7 +348,7 @@ public static class xUtf8JsonReader
                 span.Slice(1).CopyTo(raw);
                 return raw;
             }
-
+            if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(span)];
