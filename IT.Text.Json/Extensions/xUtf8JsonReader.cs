@@ -153,8 +153,16 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return null;
             if (longLength > maxEncodedLength) throw TooLong();
-
             var length = (int)longLength;
+
+            if (rawToken != 0 && GetFirst(seq) == rawToken)
+            {
+                length--;
+                var raw = MemoryPool<byte>.Shared.Rent(length);
+                seq.Slice(1).CopyTo(raw.Memory.Span);
+                return raw.Slice(0, length);
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -170,6 +178,15 @@ public static class xUtf8JsonReader
             var length = span.Length;
             if (length == 0) return null;
             if (length > maxEncodedLength) throw TooLong();
+
+            if (rawToken != 0 && span[0] == rawToken)
+            {
+                length--;
+                var raw = MemoryPool<byte>.Shared.Rent(length);
+                span.Slice(1).CopyTo(raw.Memory.Span);
+                return raw.Slice(0, length);
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -194,8 +211,16 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
-
             var length = (int)longLength;
+
+            if (rawToken != 0 && GetFirst(seq) == rawToken)
+            {
+                length--;
+                var raw = RentedListShared.Rent<byte>(length);
+                seq.Slice(1).CopyTo(raw);
+                return new ArraySegment<byte>(raw, 0, length);
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -211,6 +236,15 @@ public static class xUtf8JsonReader
             var length = span.Length;
             if (length == 0) return ArraySegment<byte>.Empty;
             if (length > maxEncodedLength) throw TooLong();
+
+            if (rawToken != 0 && span[0] == rawToken)
+            {
+                length--;
+                var raw = RentedListShared.Rent<byte>(length);
+                span.Slice(1).CopyTo(raw);
+                return new ArraySegment<byte>(raw, 0, length);
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var maxLength = (length >> 2) * 3;
@@ -235,8 +269,15 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
-
             var length = (int)longLength;
+
+            if (rawToken != 0 && GetFirst(seq) == rawToken)
+            {
+                var raw = new byte[length - 1];
+                seq.Slice(1).CopyTo(raw);
+                return raw;
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[(length >> 2) * 3];
@@ -251,6 +292,14 @@ public static class xUtf8JsonReader
             var length = span.Length;
             if (length == 0) return ArraySegment<byte>.Empty;
             if (length > maxEncodedLength) throw TooLong();
+
+            if (rawToken != 0 && span[0] == rawToken)
+            {
+                var raw = new byte[length - 1];
+                span.Slice(1).CopyTo(raw);
+                return raw;
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[(length >> 2) * 3];
@@ -274,11 +323,18 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return Array.Empty<byte>();
             if (longLength > maxEncodedLength) throw TooLong();
-
             var length = (int)longLength;
+
+            if (rawToken != 0 && GetFirst(seq) == rawToken)
+            {
+                var raw = new byte[length - 1];
+                seq.Slice(1).CopyTo(raw);
+                return raw;
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
-            var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(in seq, seq.GetPosition(length - 2))];
+            var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(seq, seq.GetPosition(length - 2))];
 
             DecodeSequence(seq, decoded, out var consumed, out var written);
 
@@ -293,6 +349,14 @@ public static class xUtf8JsonReader
             var length = span.Length;
             if (length == 0) return Array.Empty<byte>();
             if (length > maxEncodedLength) throw TooLong();
+
+            if (rawToken != 0 && span[0] == rawToken)
+            {
+                var raw = new byte[length - 1];
+                span.Slice(1).CopyTo(raw);
+                return raw;
+            }
+
             if (length % 4 != 0) throw InvalidLength();
 
             var decoded = new byte[((length >> 2) * 3) - GetPaddingCount(span)];
@@ -406,6 +470,20 @@ public static class xUtf8JsonReader
         }
 
         throw new InvalidOperationException("GetPaddingCount");
+    }
+
+    private static byte GetFirst(in ReadOnlySequence<byte> sequence)
+    {
+        var position = sequence.Start;
+        while (sequence.TryGet(ref position, out var memory))
+        {
+            var length = memory.Length;
+            if (length == 0) continue;
+
+            return memory.Span[0];
+        }
+
+        throw new InvalidOperationException("sequence is empty");
     }
 
     private static JsonException NotString() => new("Expected string");
