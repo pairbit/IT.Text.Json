@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\IT.Json\IT.Json.csproj" />
+    <ProjectReference Include="..\IT.Text.Json\IT.Text.Json.csproj" />
   </ItemGroup>
 
   <ItemGroup>
