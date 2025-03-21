@@ -9,6 +9,16 @@ namespace IT.Text.Json;
 
 public static partial class Json
 {
+    public static ArraySegment<byte> Unescape(ReadOnlySpan<byte> source)
+    {
+        var destination = new byte[source.Length];
+
+        var result = TryUnescape(source, destination, out var written);
+        Debug.Assert(result);
+
+        return new(destination, 0, written);
+    }
+
     /// <exception cref="ArgumentException">destination too small</exception>
     public static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
@@ -35,12 +45,21 @@ public static partial class Json
         throw new NotImplementedException();
     }
 
+    public static int GetFirstEscaped(ReadOnlySpan<byte> source)
+        => source.IndexOf(JsonConstants.BackSlash);
+
     public static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         int idx = source.IndexOf(JsonConstants.BackSlash);
-        Debug.Assert(idx >= 0);
+        if (idx >= 0) return TryUnescape(source, destination, idx, out written);
 
-        return TryUnescape(source, destination, idx, out written);
+        if (source.TryCopyTo(destination))
+        {
+            written = source.Length;
+            return true;
+        }
+        written = 0;
+        return false;
     }
 
     private static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)

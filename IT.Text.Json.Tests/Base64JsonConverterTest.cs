@@ -21,7 +21,7 @@ internal class Base64JsonConverterTest
 
     public class EntityInt : IDisposable
     {
-        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
+        //[RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
 
         [JsonIgnore]
@@ -49,7 +49,7 @@ internal class Base64JsonConverterTest
 
     public class EntityByte : IDisposable
     {
-        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
+        //[RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
 
         [JsonIgnore]
