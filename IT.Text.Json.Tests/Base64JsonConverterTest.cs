@@ -14,14 +14,14 @@ internal class Base64JsonConverterTest
     static Base64JsonConverterTest()
     {
         var jso = new JsonSerializerOptions();
-        jso.Converters.Add(new Base64JsonConverterFactory());
+        jso.Converters.Add(new Base64JsonConverterFactory(int.MaxValue, (byte)'!'));
 
         _jso = jso;
     }
 
     public class EntityInt : IDisposable
     {
-        [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
+        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
         
         [JsonIgnore]
@@ -42,7 +42,7 @@ internal class Base64JsonConverterTest
 
     public class EntityByte : IDisposable
     {
-        [JsonConverter(typeof(RentedArraySegmentByteJsonConverter))]
+        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
 
         [JsonIgnore]
@@ -72,6 +72,9 @@ internal class Base64JsonConverterTest
 
     [Test]
     public Task TestAsync() => TestAsync("{\"Data\":\"cXdlcnR5\",\"Id\":32767}"u8.ToArray());
+
+    [Test]
+    public void TestRaw() => Test("{\"Data\":\"!qwerty\",\"Id\":32767}"u8.ToArray());
 
     private static void Test(byte[] bakInt)
     {
