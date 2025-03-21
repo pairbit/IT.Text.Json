@@ -1,10 +1,10 @@
 ﻿using IT.Buffers.Extensions;
-using IT.Json.Converters;
+using IT.Text.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Tests;
+namespace IT.Text.Json.Tests;
 
 internal class Base64JsonConverterTest
 {

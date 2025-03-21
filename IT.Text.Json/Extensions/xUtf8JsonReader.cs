@@ -1,6 +1,6 @@
 ﻿using IT.Buffers;
 using IT.Buffers.Extensions;
-using IT.Json.Internal;
+using IT.Text.Json.Internal;
 using System;
 using System.Buffers;
 using System.Buffers.Text;
@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Extensions;
+namespace IT.Text.Json.Extensions;
 
 public static class xUtf8JsonReader
 {

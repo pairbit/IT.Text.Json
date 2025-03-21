@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO.Hashing;
 
-namespace IT.Json.Internal;
+namespace IT.Text.Json.Internal;
 
 internal static class xXxHash3
 {

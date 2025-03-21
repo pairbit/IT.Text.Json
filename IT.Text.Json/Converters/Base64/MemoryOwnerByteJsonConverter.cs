@@ -1,10 +1,10 @@
-﻿using IT.Json.Extensions;
+﻿using IT.Text.Json.Extensions;
 using System;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Converters;
+namespace IT.Text.Json.Converters;
 
 public class MemoryOwnerByteJsonConverter : JsonConverter<IMemoryOwner<byte>?>
 {

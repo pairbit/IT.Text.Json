@@ -1,4 +1,4 @@
-﻿using IT.Json.Internal;
+﻿using IT.Text.Json.Internal;
 using System;
 using System.Buffers;
 #if NET8_0_OR_GREATER
@@ -12,7 +12,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Converters;
+namespace IT.Text.Json.Converters;
 
 public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
     where TEnum : struct, Enum

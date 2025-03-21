@@ -2,7 +2,7 @@
 using BenchmarkDotNet.Order;
 using System.Text.Json;
 
-namespace IT.Json.Benchmarks;
+namespace IT.Text.Json.Benchmarks;
 
 [MemoryDiagnoser]
 [MinColumn, MaxColumn]

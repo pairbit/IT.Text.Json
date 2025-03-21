@@ -2,7 +2,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace IT.Json.Tests;
+namespace IT.Text.Json.Tests;
 
 public class JavaScriptEncoderTest
 {

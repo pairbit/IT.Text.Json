@@ -1,5 +1,5 @@
 ﻿#if NET7_0_OR_GREATER
-using IT.Json.Internal;
+using IT.Text.Json.Internal;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -14,7 +14,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 
-namespace IT.Json.Converters;
+namespace IT.Text.Json.Converters;
 
 public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     where TEnum : unmanaged, Enum

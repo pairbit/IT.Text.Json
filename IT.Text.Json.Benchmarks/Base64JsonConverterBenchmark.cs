@@ -1,10 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using IT.Json.Converters;
+using IT.Text.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
 
-namespace IT.Json.Benchmarks;
+namespace IT.Text.Json.Benchmarks;
 
 [MemoryDiagnoser]
 [MinColumn, MaxColumn]
@@ -80,7 +80,7 @@ public class Base64JsonConverterBenchmark
 
     //public static byte[] SerializeToFile<TValue>(TValue value, string filename, JsonSerializerOptions? options = null)
     //{
-    //    var file = $@"S:\git\pairbit\IT.Json\stream\{filename}.json";
+    //    var file = $@"S:\git\pairbit\IT.Text.Json\stream\{filename}.json";
 
     //    using var stream = File.Open(file, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
     //    using var writer = new Utf8JsonWriter(stream);

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IT.Json.Internal;
+namespace IT.Text.Json.Internal;
 
 internal static class xReadOnlySpan
 {

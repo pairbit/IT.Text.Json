@@ -3,7 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace IT.Json.Internal;
+namespace IT.Text.Json.Internal;
 
 internal static class RentedListShared
 {

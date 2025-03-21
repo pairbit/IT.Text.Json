@@ -1,11 +1,11 @@
 ﻿#if NET8_0_OR_GREATER
 
-using IT.Json.Extensions;
+using IT.Text.Json.Extensions;
 using System;
 using System.Buffers;
 using System.Text.Json;
 
-namespace IT.Json;
+namespace IT.Text.Json;
 
 public readonly struct Utf8JsonBufferWriter : IBufferWriter<byte>
 {

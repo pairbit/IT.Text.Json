@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
 
-namespace IT.Json.Tests;
+namespace IT.Text.Json.Tests;
 
 public class ArrayPoolTest
 {

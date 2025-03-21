@@ -1,11 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using IT.Buffers;
-using IT.Json.Converters;
+using IT.Text.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
 
-namespace IT.Json.Benchmarks;
+namespace IT.Text.Json.Benchmarks;
 
 [MemoryDiagnoser]
 [MinColumn, MaxColumn]

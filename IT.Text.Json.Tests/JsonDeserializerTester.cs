@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 
-namespace IT.Json.Tests;
+namespace IT.Text.Json.Tests;
 
 public class JsonDeserializerTester
 {

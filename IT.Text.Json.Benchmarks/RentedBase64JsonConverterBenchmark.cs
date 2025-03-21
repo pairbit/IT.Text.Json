@@ -1,11 +1,11 @@
 ﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using IT.Json.Converters;
+using IT.Text.Json.Converters;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Benchmarks;
+namespace IT.Text.Json.Benchmarks;
 
 public class RentedData : IDisposable
 {

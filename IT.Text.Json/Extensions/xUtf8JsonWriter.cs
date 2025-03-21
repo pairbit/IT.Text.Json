@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 #endif
 using System.Text.Json;
 
-namespace IT.Json.Extensions;
+namespace IT.Text.Json.Extensions;
 
 public static class xUtf8JsonWriter
 {

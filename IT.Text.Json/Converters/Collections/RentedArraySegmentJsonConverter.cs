@@ -1,9 +1,9 @@
-﻿using IT.Json.Extensions;
+﻿using IT.Text.Json.Extensions;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Converters;
+namespace IT.Text.Json.Converters;
 
 //https://learn.microsoft.com/en-us/dotnet/standard/serialization/system-text-json/converters-how-to
 public class RentedArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>

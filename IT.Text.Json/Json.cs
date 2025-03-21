@@ -1,6 +1,6 @@
 ﻿using IT.Buffers;
 using IT.Buffers.Extensions;
-using IT.Json.Internal;
+using IT.Text.Json.Internal;
 using System;
 using System.Buffers;
 using System.IO;
@@ -10,7 +10,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace IT.Json;
+namespace IT.Text.Json;
 
 public static class Json
 {

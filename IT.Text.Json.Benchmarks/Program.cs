@@ -1,4 +1,4 @@
-﻿using IT.Json.Benchmarks;
+﻿using IT.Text.Json.Benchmarks;
 
 //new EnumJsonConverterBenchmark().Test();
 //BenchmarkDotNet.Running.BenchmarkRunner.Run<EnumJsonConverterBenchmark>();

@@ -1,11 +1,11 @@
-﻿using IT.Json.Converters;
-using IT.Json.Internal;
+﻿using IT.Text.Json.Converters;
+using IT.Text.Json.Internal;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Tests;
+namespace IT.Text.Json.Tests;
 
 enum EnumByte : byte
 {

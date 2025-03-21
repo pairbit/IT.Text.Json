@@ -4,7 +4,7 @@ using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace IT.Json.Converters;
+namespace IT.Text.Json.Converters;
 
 public class RentedCollectionJsonConverterFactoryAttribute : JsonConverterAttribute
 {
