@@ -153,7 +153,7 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return null;
             if (longLength > maxEncodedLength) throw TooLong();
-            var length = (int)longLength;
+            var length = checked((int)longLength);
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
@@ -211,7 +211,7 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
-            var length = (int)longLength;
+            var length = checked((int)longLength);
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
@@ -269,7 +269,7 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return ArraySegment<byte>.Empty;
             if (longLength > maxEncodedLength) throw TooLong();
-            var length = (int)longLength;
+            var length = checked((int)longLength);
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
@@ -323,7 +323,7 @@ public static class xUtf8JsonReader
             var longLength = seq.Length;
             if (longLength == 0) return Array.Empty<byte>();
             if (longLength > maxEncodedLength) throw TooLong();
-            var length = (int)longLength;
+            var length = checked((int)longLength);
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
