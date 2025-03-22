@@ -355,6 +355,7 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
+                //TODO: rent buffer
                 if (reader.ValueIsEscaped) throw EscapingNotSupported();
                 var raw = new byte[length - 1];
                 seq.Slice(1).CopyTo(raw);
@@ -381,6 +382,7 @@ public static class xUtf8JsonReader
 
             if (rawToken != 0 && span[0] == rawToken)
             {
+                //TODO: rent buffer
                 if (reader.ValueIsEscaped) throw EscapingNotSupported();
                 var raw = new byte[length - 1];
                 span.Slice(1).CopyTo(raw);
