@@ -14,7 +14,7 @@ internal class JsonUnescapeTest
         Test("\"mystr\"", "\\u0022mystr\\u0022");
         Test("\n\r\t\b\f", "\\n\\r\\t\\b\\f");
         Test("\\", "\\\\");
-        
+
         Test("моя строка", "\\u043C\\u043E\\u044F \\u0441\\u0442\\u0440\\u043E\\u043A\\u0430");
     }
 
@@ -24,6 +24,8 @@ internal class JsonUnescapeTest
         UnescapeTest("\\/", "/");
         UnescapeTest("\\\"mystr\\\"", "\"mystr\"");
         UnescapeTest("\\u0022mystr\\u0022", "\"mystr\"");
+
+        Assert.Throws<IndexOutOfRangeException>(() => Unescape("\\"));
     }
 
     private static void Test(string str, string escaped)
@@ -38,6 +40,6 @@ internal class JsonUnescapeTest
         Assert.That(Unescape(escaped), Is.EqualTo(str));
     }
 
-    private static string Unescape(string escaped) 
+    private static string Unescape(string escaped)
         => Encoding.UTF8.GetString(Json.Unescape(Encoding.UTF8.GetBytes(escaped)));
 }
