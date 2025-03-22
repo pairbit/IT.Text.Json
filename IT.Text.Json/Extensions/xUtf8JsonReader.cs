@@ -156,16 +156,14 @@ public static class xUtf8JsonReader
             if (rawToken != 0 && GetFirst(seq) == rawToken)
             {
                 length--;
-                var raw = MemoryPool<byte>.Shared.Rent(length);
+                var rawOwner = MemoryPool<byte>.Shared.Rent(length);
+                var raw = rawOwner.Memory.Span.Slice(0, length);
+                seq.Slice(1).CopyTo(raw);
                 if (reader.ValueIsEscaped)
                 {
-                    Json.UnsafeUnescape(seq.Slice(1), raw.Memory.Span, out length);
+                    Json.UnescapeInPlace(raw, out length);
                 }
-                else
-                {
-                    seq.Slice(1).CopyTo(raw.Memory.Span);
-                }
-                return raw.Slice(0, length);
+                return rawOwner.Slice(0, length);
             }
             if (reader.ValueIsEscaped) throw EscapingNotSupported();
             if (length % 4 != 0) throw InvalidLength();
@@ -227,13 +225,10 @@ public static class xUtf8JsonReader
             {
                 length--;
                 var raw = RentedListShared.Rent<byte>(length);
+                seq.Slice(1).CopyTo(raw);
                 if (reader.ValueIsEscaped)
                 {
-                    Json.UnsafeUnescape(seq.Slice(1), raw, out length);
-                }
-                else
-                {
-                    seq.Slice(1).CopyTo(raw);
+                    Json.UnescapeInPlace(raw.AsSpan(0, length), out length);
                 }
                 return new ArraySegment<byte>(raw, 0, length);
             }
@@ -297,13 +292,10 @@ public static class xUtf8JsonReader
             {
                 length--;
                 var raw = new byte[length];
+                seq.Slice(1).CopyTo(raw);
                 if (reader.ValueIsEscaped)
                 {
-                    Json.UnsafeUnescape(seq.Slice(1), raw, out length);
-                }
-                else
-                {
-                    seq.Slice(1).CopyTo(raw);
+                    Json.UnescapeInPlace(raw.AsSpan(0, length), out length);
                 }
                 return new ArraySegment<byte>(raw, 0, length);
             }

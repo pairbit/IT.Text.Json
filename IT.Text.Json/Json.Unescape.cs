@@ -1,6 +1,5 @@
 ﻿using IT.Text.Json.Internal;
 using System;
-using System.Buffers;
 using System.Buffers.Text;
 using System.Diagnostics;
 using System.Text;
@@ -9,19 +8,6 @@ namespace IT.Text.Json;
 
 public static partial class Json
 {
-    public static void UnescapeInPlace(Span<byte> source, out int written)
-    {
-        int idx = source.IndexOf(JsonConstants.BackSlash);
-        if (idx >= 0)
-        {
-            UnescapeInPlace(source, idx, out written);
-        }
-        else
-        {
-            written = source.Length;
-        }
-    }
-
     public static ArraySegment<byte> Unescape(ReadOnlySpan<byte> source)
     {
         var destination = new byte[source.Length];
@@ -47,17 +33,6 @@ public static partial class Json
         Debug.Assert(result);
     }
 
-    public static void UnsafeUnescape(in ReadOnlySequence<byte> source, Span<byte> destination, out int written)
-    {
-        var result = TryUnescape(source, destination, out written);
-        Debug.Assert(result);
-    }
-
-    public static bool TryUnescape(in ReadOnlySequence<byte> source, Span<byte> destination, out int written)
-    {
-        throw new NotImplementedException();
-    }
-
     public static int GetFirstEscaped(ReadOnlySpan<byte> source)
         => source.IndexOf(JsonConstants.BackSlash);
 
@@ -73,6 +48,19 @@ public static partial class Json
         }
         written = 0;
         return false;
+    }
+
+    public static void UnescapeInPlace(Span<byte> source, out int written)
+    {
+        int idx = source.IndexOf(JsonConstants.BackSlash);
+        if (idx >= 0)
+        {
+            UnescapeInPlace(source, idx, out written);
+        }
+        else
+        {
+            written = source.Length;
+        }
     }
 
     private static void UnescapeInPlace(Span<byte> source, int idx, out int written)
