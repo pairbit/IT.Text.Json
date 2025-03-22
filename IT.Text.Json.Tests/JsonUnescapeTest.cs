@@ -41,5 +41,11 @@ internal class JsonUnescapeTest
     }
 
     private static string Unescape(string escaped)
-        => Encoding.UTF8.GetString(Json.Unescape(Encoding.UTF8.GetBytes(escaped)));
+    {
+        var escapedUtf8 = Encoding.UTF8.GetBytes(escaped);
+
+        var unescapedUtf8 = Json.Unescape(escapedUtf8);
+
+        return Encoding.UTF8.GetString(unescapedUtf8);
+    }
 }

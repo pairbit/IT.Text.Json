@@ -9,6 +9,14 @@ namespace IT.Text.Json;
 
 public static partial class Json
 {
+    //public static void UnescapeInPlace(Span<byte> source)
+    //{
+    //    var result = TryUnescapeInPlace(source, out var written);
+    //    Debug.Assert(result);
+
+    //    return new(destination, 0, written);
+    //}
+
     public static ArraySegment<byte> Unescape(ReadOnlySpan<byte> source)
     {
         var destination = new byte[source.Length];
@@ -111,54 +119,7 @@ public static partial class Json
                     destination[written++] = JsonConstants.FormFeed;
                     break;
                 default:
-                    Debug.Assert(source[idx] == 'u', "invalid escape sequences must have already been caught by Utf8JsonReader.Read()");
-
-                    // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
-                    // Otherwise, the Utf8JsonReader would have already thrown an exception.
-                    Debug.Assert(source.Length >= idx + 5);
-
-                    bool result = Utf8Parser.TryParse(source.Slice(idx + 1, 4), out int scalar, out int bytesConsumed, 'x');
-                    Debug.Assert(result);
-                    Debug.Assert(bytesConsumed == 4);
-                    idx += 4;
-
-                    if (JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
-                    {
-                        // The first hex value cannot be a low surrogate.
-                        if (scalar >= JsonConstants.LowSurrogateStartValue)
-                        {
-                            throw InvalidUTF16(scalar);
-                        }
-
-                        Debug.Assert(JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.HighSurrogateEndValue));
-
-                        // We must have a low surrogate following a high surrogate.
-                        if (source.Length < idx + 7 || source[idx + 1] != '\\' || source[idx + 2] != 'u')
-                        {
-                            throw IncompleteUTF16();
-                        }
-
-                        // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
-                        // Otherwise, the Utf8JsonReader would have already thrown an exception.
-                        result = Utf8Parser.TryParse(source.Slice(idx + 3, 4), out int lowSurrogate, out bytesConsumed, 'x');
-                        Debug.Assert(result);
-                        Debug.Assert(bytesConsumed == 4);
-                        idx += 6;
-
-                        // If the first hex value is a high surrogate, the next one must be a low surrogate.
-                        if (!JsonHelpers.IsInRangeInclusive((uint)lowSurrogate, JsonConstants.LowSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
-                        {
-                            throw InvalidUTF16(lowSurrogate);
-                        }
-
-                        // To find the unicode scalar:
-                        // (0x400 * (High surrogate - 0xD800)) + Low surrogate - 0xDC00 + 0x10000
-                        scalar = (JsonConstants.BitShiftBy10 * (scalar - JsonConstants.HighSurrogateStartValue))
-                            + (lowSurrogate - JsonConstants.LowSurrogateStartValue)
-                            + JsonConstants.UnicodePlane01StartValue;
-                    }
-
-                    var rune = new Rune(scalar);
+                    var rune = new Rune(GetScalar(source, ref idx));
                     bool success = rune.TryEncodeToUtf8(destination.Slice(written), out int bytesWritten);
                     if (!success)
                     {
@@ -227,7 +188,59 @@ public static partial class Json
         return false;
     }
 
-    public static InvalidOperationException InvalidUTF16(int charAsInt)
+    private static int GetScalar(ReadOnlySpan<byte> source, ref int idx)
+    {
+        Debug.Assert(source[idx] == 'u', "invalid escape sequences must have already been caught by Utf8JsonReader.Read()");
+
+        // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
+        // Otherwise, the Utf8JsonReader would have already thrown an exception.
+        Debug.Assert(source.Length >= idx + 5);
+
+        bool result = Utf8Parser.TryParse(source.Slice(idx + 1, 4), out int scalar, out int bytesConsumed, 'x');
+        Debug.Assert(result);
+        Debug.Assert(bytesConsumed == 4);
+        idx += 4;
+
+        if (JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
+        {
+            // The first hex value cannot be a low surrogate.
+            if (scalar >= JsonConstants.LowSurrogateStartValue)
+            {
+                throw InvalidUTF16(scalar);
+            }
+
+            Debug.Assert(JsonHelpers.IsInRangeInclusive((uint)scalar, JsonConstants.HighSurrogateStartValue, JsonConstants.HighSurrogateEndValue));
+
+            // We must have a low surrogate following a high surrogate.
+            if (source.Length < idx + 7 || source[idx + 1] != '\\' || source[idx + 2] != 'u')
+            {
+                throw IncompleteUTF16();
+            }
+
+            // The source is known to be valid JSON, and hence if we see a \u, it is guaranteed to have 4 hex digits following it
+            // Otherwise, the Utf8JsonReader would have already thrown an exception.
+            result = Utf8Parser.TryParse(source.Slice(idx + 3, 4), out int lowSurrogate, out bytesConsumed, 'x');
+            Debug.Assert(result);
+            Debug.Assert(bytesConsumed == 4);
+            idx += 6;
+
+            // If the first hex value is a high surrogate, the next one must be a low surrogate.
+            if (!JsonHelpers.IsInRangeInclusive((uint)lowSurrogate, JsonConstants.LowSurrogateStartValue, JsonConstants.LowSurrogateEndValue))
+            {
+                throw InvalidUTF16(lowSurrogate);
+            }
+
+            // To find the unicode scalar:
+            // (0x400 * (High surrogate - 0xD800)) + Low surrogate - 0xDC00 + 0x10000
+            scalar = (JsonConstants.BitShiftBy10 * (scalar - JsonConstants.HighSurrogateStartValue))
+                + (lowSurrogate - JsonConstants.LowSurrogateStartValue)
+                + JsonConstants.UnicodePlane01StartValue;
+        }
+
+        return scalar;
+    }
+
+    private static InvalidOperationException InvalidUTF16(int charAsInt)
         => new($"Can not read invalid utf16: 0x{charAsInt:X2}");
 
     private static InvalidOperationException IncompleteUTF16()
