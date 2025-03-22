@@ -76,6 +76,24 @@ enum EnumEscaped
     Escaped2 = 8,
 }
 
+[Flags]
+enum EnumMemberName
+{
+#if NET8_0_OR_GREATER
+    [JsonStringEnumMemberName("enumMemberName1")]
+#else
+    [JsonPropertyName("enumMemberName1")]
+#endif
+    Value1 = 4,
+
+#if NET8_0_OR_GREATER
+    [JsonStringEnumMemberName("enumMemberName2")]
+#else
+    [JsonPropertyName("enumMemberName2")]
+#endif
+    Value2 = 8,
+}
+
 public class EnumJsonConverterTest
 {
     [Test]
@@ -224,7 +242,7 @@ public class EnumJsonConverterTest
         Assert.That(Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
         Assert.That(Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
         Assert.That(Serialize((EnumByte)200, jso), Is.EqualTo("200"));
-
+        
         Assert.That(Deserialize<EnumByte>("\"first\"", jso), Is.EqualTo(EnumByte.First));
         Assert.That(Deserialize<EnumByte>("\"second\"", jso), Is.EqualTo(EnumByte.Second));
 
@@ -250,6 +268,20 @@ public class EnumJsonConverterTest
 
         Assert.That(Deserialize<EnumByte>("\"   fiRsT\"", jso), Is.EqualTo(EnumByte.First));
         Assert.That(Deserialize<EnumByte>("\" SeCoNd   \"", jso), Is.EqualTo(EnumByte.Second));
+
+#if NET8_0_OR_GREATER
+        Assert.That(Serialize(EnumMemberName.Value1, jso), Is.EqualTo("\"enumMemberName1\""));
+        Assert.That(Serialize(EnumMemberName.Value2, jso), Is.EqualTo("\"enumMemberName2\""));
+
+        Assert.That(Deserialize<EnumMemberName>("\"enumMemberName1\"", jso), Is.EqualTo(EnumMemberName.Value1));
+        Assert.That(Deserialize<EnumMemberName>("\"enumMemberName2\"", jso), Is.EqualTo(EnumMemberName.Value2));
+#else
+        Assert.That(Serialize(EnumMemberName.Value1, jso), Is.EqualTo("\"value1\""));
+        Assert.That(Serialize(EnumMemberName.Value2, jso), Is.EqualTo("\"value2\""));
+
+        Assert.That(Deserialize<EnumMemberName>("\"value1\"", jso), Is.EqualTo(EnumMemberName.Value1));
+        Assert.That(Deserialize<EnumMemberName>("\"value2\"", jso), Is.EqualTo(EnumMemberName.Value2));
+#endif
     }
 
     [Test]
@@ -282,8 +314,8 @@ public class EnumJsonConverterTest
         Assert.That(Assert.Catch<TypeInitializationException>(() => new EnumJsonConverter<EnumEmpty>(JsonNamingPolicy.CamelCase))!.GetBaseException().Message,
             Is.EqualTo(ArgEnumEmpty<EnumEmpty>().Message));
     }
+    
 
-#if NET7_0_OR_GREATER
     [Test]
     public void StringEnum_Flags_Test()
     {
@@ -297,8 +329,11 @@ public class EnumJsonConverterTest
             Is.EqualTo("\"three\""));
 
         Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+#if NET8_0_OR_GREATER
             Is.EqualTo("\"one, two, four\""));
-
+#else
+            Is.EqualTo("\"two, five\""));
+#endif
         //Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | (EnumByteFlags)8, jso),
         //    Is.EqualTo("\"first, second, eight\""));
 
@@ -333,7 +368,11 @@ public class EnumJsonConverterTest
             Is.EqualTo("\"three\""));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+#if NET8_0_OR_GREATER
             Is.EqualTo("\"one, two, four\""));
+#else
+            Is.EqualTo("\"two, five\""));
+#endif
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  one   ,    two, four\"", jso),
             Is.EqualTo((EnumByteFlags)7));
@@ -342,6 +381,7 @@ public class EnumJsonConverterTest
             Is.EqualTo((EnumByteFlags)7));
     }
 
+#if NET7_0_OR_GREATER
     [Test]
     public void StrictEnum_Flags_Test()
     {
