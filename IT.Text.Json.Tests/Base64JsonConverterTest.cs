@@ -19,9 +19,9 @@ internal class Base64JsonConverterTest
         _jso = jso;
     }
 
-    public class EntityInt : IDisposable
+    public class EntityInt : IDisposable, IEquatable<EntityInt>
     {
-        //[RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
+        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
 
         [JsonIgnore]
@@ -45,11 +45,14 @@ internal class Base64JsonConverterTest
                 }
             }
         }
+
+        bool IEquatable<EntityInt>.Equals(EntityInt? other)
+            => other != null && Id == other.Id && Data.AsSpan().SequenceEqual(other.Data);
     }
 
-    public class EntityByte : IDisposable
+    public class EntityByte : IDisposable, IEquatable<EntityByte>
     {
-        //[RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
+        [RentedBase64JsonConverterFactory(int.MaxValue, (byte)'!')]
         public ArraySegment<byte> Data { get; set; }
 
         [JsonIgnore]
@@ -73,6 +76,9 @@ internal class Base64JsonConverterTest
                 }
             }
         }
+
+        bool IEquatable<EntityByte>.Equals(EntityByte? other)
+            => other != null && Id == other.Id && Data.AsSpan().SequenceEqual(other.Data);
     }
 
     [Test]
@@ -89,7 +95,7 @@ internal class Base64JsonConverterTest
 
     private static async Task Test(byte[] entityIntUtf8, byte[] dataValid)
     {
-        using var entityInt = Json.Deserialize<EntityInt>(entityIntUtf8, _jso)!;
+        using var entityInt = Deserialize<EntityInt>(entityIntUtf8, _jso)!;
 
         var data = entityInt.Data;
         Assert.That(data.AsSpan().SequenceEqual(dataValid), Is.True);
@@ -99,7 +105,7 @@ internal class Base64JsonConverterTest
         var bin = JsonSerializer.SerializeToUtf8Bytes(entity, _jso);
         var str = Encoding.UTF8.GetString(bin);
 
-        using var entityByte = Json.Deserialize<EntityByte>(bin, _jso);
+        using var entityByte = Deserialize<EntityByte>(bin, _jso);
 
         var copyData = entityByte!.Data;
 
@@ -108,7 +114,7 @@ internal class Base64JsonConverterTest
 
         Assert.That(data.AsSpan().SequenceEqual(copyData.AsSpan()), Is.True);
 
-        Assert.Throws<JsonException>(() => Json.Deserialize<EntityByte>(entityIntUtf8, _jso));
+        Assert.Throws<JsonException>(() => Deserialize<EntityByte>(entityIntUtf8, _jso));
 
         //async
         using var entityByte2 = await Json.DeserializeAsync<EntityByte>(new MemoryStream(bin), _jso);
@@ -122,5 +128,11 @@ internal class Base64JsonConverterTest
 
         Assert.ThrowsAsync<JsonException>(async () =>
             await Json.DeserializeAsync<EntityByte>(new MemoryStream(entityIntUtf8), _jso));
+    }
+
+    private static T? Deserialize<T>(ReadOnlyMemory<byte> utf8Json, JsonSerializerOptions? options = null)
+        where T : IEquatable<T>
+    {
+        return JsonDeserializerTester.Deserialize<T>(utf8Json, options);
     }
 }
