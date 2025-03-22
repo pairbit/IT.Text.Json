@@ -9,13 +9,18 @@ namespace IT.Text.Json;
 
 public static partial class Json
 {
-    //public static void UnescapeInPlace(Span<byte> source)
-    //{
-    //    var result = TryUnescapeInPlace(source, out var written);
-    //    Debug.Assert(result);
-
-    //    return new(destination, 0, written);
-    //}
+    public static void UnescapeInPlace(Span<byte> source, out int written)
+    {
+        int idx = source.IndexOf(JsonConstants.BackSlash);
+        if (idx >= 0)
+        {
+            UnescapeInPlace(source, idx, out written);
+        }
+        else
+        {
+            written = source.Length;
+        }
+    }
 
     public static ArraySegment<byte> Unescape(ReadOnlySpan<byte> source)
     {
@@ -68,6 +73,92 @@ public static partial class Json
         }
         written = 0;
         return false;
+    }
+
+    private static void UnescapeInPlace(Span<byte> source, int idx, out int written)
+    {
+        Debug.Assert(idx >= 0 && idx < source.Length);
+        Debug.Assert(source[idx] == JsonConstants.BackSlash);
+
+        written = idx;
+
+        while (true)
+        {
+            Debug.Assert(source[idx] == JsonConstants.BackSlash);
+
+            switch (source[++idx])
+            {
+                case JsonConstants.Quote:
+                    source[written++] = JsonConstants.Quote;
+                    break;
+                case (byte)'n':
+                    source[written++] = JsonConstants.LineFeed;
+                    break;
+                case (byte)'r':
+                    source[written++] = JsonConstants.CarriageReturn;
+                    break;
+                case JsonConstants.BackSlash:
+                    source[written++] = JsonConstants.BackSlash;
+                    break;
+                case JsonConstants.Slash:
+                    source[written++] = JsonConstants.Slash;
+                    break;
+                case (byte)'t':
+                    source[written++] = JsonConstants.Tab;
+                    break;
+                case (byte)'b':
+                    source[written++] = JsonConstants.BackSpace;
+                    break;
+                case (byte)'f':
+                    source[written++] = JsonConstants.FormFeed;
+                    break;
+                default:
+                    var rune = new Rune(GetScalar(source, ref idx));
+                    bool success = rune.TryEncodeToUtf8(source.Slice(written), out int bytesWritten);
+                    Debug.Assert(success);
+                    Debug.Assert(bytesWritten <= 4);
+                    written += bytesWritten;
+                    break;
+            }
+
+            if (++idx == source.Length) return;
+
+            if (source[idx] != JsonConstants.BackSlash)
+            {
+                ReadOnlySpan<byte> remaining = source.Slice(idx);
+                int nextUnescapedSegmentLength = remaining.IndexOf(JsonConstants.BackSlash);
+                if (nextUnescapedSegmentLength < 0)
+                {
+                    nextUnescapedSegmentLength = remaining.Length;
+                }
+
+                Debug.Assert(nextUnescapedSegmentLength > 0);
+                switch (nextUnescapedSegmentLength)
+                {
+                    case 1:
+                        source[written++] = source[idx++];
+                        break;
+                    case 2:
+                        source[written++] = source[idx++];
+                        source[written++] = source[idx++];
+                        break;
+                    case 3:
+                        source[written++] = source[idx++];
+                        source[written++] = source[idx++];
+                        source[written++] = source[idx++];
+                        break;
+                    default:
+                        remaining.Slice(0, nextUnescapedSegmentLength).CopyTo(source.Slice(written));
+                        written += nextUnescapedSegmentLength;
+                        idx += nextUnescapedSegmentLength;
+                        break;
+                }
+
+                Debug.Assert(idx == source.Length || source[idx] == JsonConstants.BackSlash);
+
+                if (idx == source.Length) return;
+            }
+        }
     }
 
     private static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, int idx, out int written)
