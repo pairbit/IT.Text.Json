@@ -9,14 +9,19 @@ internal class JsonUnescapeTest
     public void Test()
     {
         Test("mystr", "mystr");
+        Test("/", "/");
+
         Test("\"mystr\"", "\\u0022mystr\\u0022");
-        Test("\n\r\t", "\\n\\r\\t");
+        Test("\n\r\t\b\f", "\\n\\r\\t\\b\\f");
+        Test("\\", "\\\\");
+        
         Test("моя строка", "\\u043C\\u043E\\u044F \\u0441\\u0442\\u0440\\u043E\\u043A\\u0430");
     }
 
     [Test]
     public void UnescapeTest()
     {
+        UnescapeTest("\\/", "/");
         UnescapeTest("\\\"mystr\\\"", "\"mystr\"");
         UnescapeTest("\\u0022mystr\\u0022", "\"mystr\"");
     }
