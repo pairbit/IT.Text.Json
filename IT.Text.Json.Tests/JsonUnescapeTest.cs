@@ -8,28 +8,29 @@ internal class JsonUnescapeTest
     [Test]
     public void Test()
     {
-        Test("mystr");
-        Test("\"mystr\"");
-        Test("\n\r\t");
+        Test("mystr", "mystr");
+        Test("\"mystr\"", "\\u0022mystr\\u0022");
+        Test("\n\r\t", "\\n\\r\\t");
+        Test("моя строка", "\\u043C\\u043E\\u044F \\u0441\\u0442\\u0440\\u043E\\u043A\\u0430");
     }
 
     [Test]
     public void UnescapeTest()
     {
         UnescapeTest("\\\"mystr\\\"", "\"mystr\"");
-        UnescapeTest("\\n\\r\\t", "\n\r\t");
+        UnescapeTest("\\u0022mystr\\u0022", "\"mystr\"");
     }
 
-    private static void Test(string str)
+    private static void Test(string str, string escaped)
     {
-        var encoded = JavaScriptEncoder.Default.Encode(str);
-        var unescaped = Unescape(encoded);
-        Assert.That(unescaped, Is.EqualTo(str));
+        Assert.That(JavaScriptEncoder.Default.Encode(str), Is.EqualTo(escaped));
+
+        UnescapeTest(escaped, str);
     }
 
-    private static void UnescapeTest(string escaped, string unescaped)
+    private static void UnescapeTest(string escaped, string str)
     {
-        Assert.That(Unescape(escaped), Is.EqualTo(unescaped));
+        Assert.That(Unescape(escaped), Is.EqualTo(str));
     }
 
     private static string Unescape(string escaped) 
