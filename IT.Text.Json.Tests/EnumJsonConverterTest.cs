@@ -2,6 +2,7 @@
 using IT.Text.Json.Internal;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -89,7 +90,7 @@ enum EnumMemberName
 #if NET8_0_OR_GREATER
     [JsonStringEnumMemberName("enumMemberName2")]
 #else
-    [JsonPropertyName("enumMemberName2")]
+    [EnumMember(Value = "enumMemberName2")]
 #endif
     Value2 = 8,
 }
@@ -290,6 +291,13 @@ public class EnumJsonConverterTest
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new EnumJsonConverter<EnumByte>(JsonNamingPolicy.CamelCase));
         jso.Converters.Add(new EnumJsonConverter<EnumOne>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new EnumJsonConverter<EnumMemberName>(JsonNamingPolicy.CamelCase));
+
+        Assert.That(Serialize(EnumMemberName.Value1, jso), Is.EqualTo("\"enumMemberName1\""));
+        Assert.That(Serialize(EnumMemberName.Value2, jso), Is.EqualTo("\"enumMemberName2\""));
+
+        Assert.That(Deserialize<EnumMemberName>("\"enumMemberName1\"", jso), Is.EqualTo(EnumMemberName.Value1));
+        Assert.That(Deserialize<EnumMemberName>("\"enumMemberName2\"", jso), Is.EqualTo(EnumMemberName.Value2));
 
         Assert.That(Serialize(EnumByte.First, jso), Is.EqualTo("\"first\""));
         Assert.That(Serialize(EnumByte.Second, jso), Is.EqualTo("\"second\""));
@@ -380,15 +388,16 @@ public class EnumJsonConverterTest
             Is.EqualTo((EnumByteFlags)7));
 
 #if NET8_0_OR_GREATER
-        Assert.That(Serialize(EnumMemberName.Value1 | EnumMemberName.Value2, jso), Is.EqualTo("\"enumMemberName1, enumMemberName2\""));
+        Assert.That(Serialize(EnumMemberName.Value1 | EnumMemberName.Value2, jso), 
+            Is.EqualTo("\"enumMemberName1, enumMemberName2\""));
 
         Assert.That(Deserialize<EnumMemberName>("\"enumMemberName1, enumMemberName2\"", jso),
             Is.EqualTo(EnumMemberName.Value1 | EnumMemberName.Value2));
 #else
-        Assert.That(Serialize(EnumMemberName.Value1 | EnumMemberName.Value2, jso), 
+        Assert.That(Serialize(EnumMemberName.Value1 | EnumMemberName.Value2, jso),
             Is.EqualTo("\"value1, value2\""));
 
-        Assert.That(Deserialize<EnumMemberName>("\"value1, value2\"", jso), 
+        Assert.That(Deserialize<EnumMemberName>("\"value1, value2\"", jso),
             Is.EqualTo(EnumMemberName.Value1 | EnumMemberName.Value2));
 #endif
     }
@@ -400,6 +409,13 @@ public class EnumJsonConverterTest
         var jso = new JsonSerializerOptions();
         jso.Converters.Add(new FlagsEnumJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase));
         jso.Converters.Add(new FlagsEnumJsonConverter<EnumIntFlags, int>(JsonNamingPolicy.CamelCase));
+        jso.Converters.Add(new FlagsEnumJsonConverter<EnumMemberName, int>(JsonNamingPolicy.CamelCase));
+
+        Assert.That(Serialize(EnumMemberName.Value1 | EnumMemberName.Value2, jso), 
+            Is.EqualTo("\"enumMemberName1, enumMemberName2\""));
+
+        Assert.That(Deserialize<EnumMemberName>("\"enumMemberName1, enumMemberName2\"", jso),
+            Is.EqualTo(EnumMemberName.Value1 | EnumMemberName.Value2));
 
         Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
         Assert.That(Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));

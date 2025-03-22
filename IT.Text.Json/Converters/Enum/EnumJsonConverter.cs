@@ -5,6 +5,7 @@ using System.Buffers;
 using System.Collections.Frozen;
 #endif
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Hashing;
 using System.Reflection;
 using System.Text;
@@ -66,11 +67,14 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
             var name = value.ToString();
             var member = type.GetMember(name)[0];
 
-            var attr = member.GetCustomAttribute<JsonPropertyNameAttribute>(inherit: false);
-            if (attr != null)
-                name = attr.Name;
+            if (TryGetEnumName(member, out var enumName))
+            {
+                name = enumName;
+            }
             else if (namingPolicy != null)
+            {
                 name = namingPolicy.ConvertName(name);
+            }
 
             var utf8Name = utf8.GetBytes(name);
             var utf8NameEncoded = JsonEncodedText.Encode(utf8Name, encoder);
@@ -200,4 +204,32 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 
     protected static JsonException NotMapped<T>(T value) =>
         new($"The JSON enum '{value}' could not be mapped to any .NET member contained in type '{typeof(TEnum).FullName}'.");
+
+    private static bool TryGetEnumName(MemberInfo member, [MaybeNullWhen(false)] out string enumName)
+    {
+#if NET8_0_OR_GREATER
+        var enumMemberName = member.GetCustomAttribute<JsonStringEnumMemberNameAttribute>(inherit: false);
+        if (enumMemberName != null)
+        {
+            enumName = enumMemberName.Name;
+            return true;
+        }
+#endif
+        var propertyName = member.GetCustomAttribute<JsonPropertyNameAttribute>(inherit: false);
+        if (propertyName != null)
+        {
+            enumName = propertyName.Name;
+            return true;
+        }
+
+        var enumMember = member.GetCustomAttribute<System.Runtime.Serialization.EnumMemberAttribute>(inherit: false);
+        if (enumMember != null && enumMember.IsValueSetExplicitly)
+        {
+            enumName = enumMember.Value;
+            return enumName != null;
+        }
+
+        enumName = null;
+        return false;
+    }
 }
