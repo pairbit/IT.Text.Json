@@ -39,6 +39,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         <int, TNumber> _xxhToNumber;
 
     private readonly ConcurrentDictionary<TEnum, JsonEncodedText> _valuesToUtf8Name;
+    private readonly bool _writeFromEnd;
 
     static FlagsEnumJsonConverter()
     {
@@ -48,7 +49,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         if (_values.Length == 1) throw new ArgumentException($"Enum '{typeof(TEnum).FullName}' must contain more than one value", nameof(TEnum));
     }
 
-    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0, byte[]? sep = null)
+    public FlagsEnumJsonConverter(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0, byte[]? sep = null, bool writeFromEnd = true)
         : base(namingPolicy, encoder, seed)
     {
         if (sep == null || sep.Length == 0) sep = ", "u8.ToArray();
@@ -89,6 +90,7 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
         _valuesToUtf8Name = new(valueToUtf8Name);
         _maxLength = sumNameLength + (sepEncoded.EncodedUtf8Bytes.Length * (values.Length - 1));
         _sep = sepEncoded;
+        _writeFromEnd = writeFromEnd;
     }
 
     public override TEnum Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -170,6 +172,9 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     }
 
     private bool TryWrite(ref Span<byte> utf8Value, ref TNumber numberValue)
+        => _writeFromEnd ? TryWriteFromEnd(ref utf8Value, ref numberValue) : TryWriteFromStart(ref utf8Value, ref numberValue);
+
+    private bool TryWriteFromEnd(ref Span<byte> utf8Value, ref TNumber numberValue)
     {
         var length = utf8Value.Length;
         var start = length;
@@ -200,6 +205,39 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
             }
         }
         utf8Value = utf8Value.Slice(start);
+        return false;
+    }
+
+    private bool TryWriteFromStart(ref Span<byte> utf8Value, ref TNumber numberValue)
+    {
+        var written = 0;
+        var sep = _sep.EncodedUtf8Bytes;
+        var numberUtf8Name = _numberUtf8Name;
+        for (var i = 0; i < numberUtf8Name.Length; i++)
+        {
+            (var number, var utf8Name) = numberUtf8Name[i];
+            if (number == default) continue;
+
+            if ((numberValue & number) == number)
+            {
+                if (written > 0)
+                {
+                    sep.CopyTo(utf8Value.Slice(written));
+                    written += sep.Length;
+                }
+                var utf8NameBytes = utf8Name.EncodedUtf8Bytes;
+                utf8NameBytes.CopyTo(utf8Value.Slice(written));
+                written += utf8NameBytes.Length;
+
+                numberValue &= ~number;
+                if (numberValue == default)
+                {
+                    utf8Value = utf8Value.Slice(0, written);
+                    return true;
+                }
+            }
+        }
+        utf8Value = utf8Value.Slice(0, written);
         return false;
     }
 

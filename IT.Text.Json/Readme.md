@@ -4,4 +4,4 @@
 [![GitHub Actions](https://img.shields.io/github/actions/workflow/status/pairbit/IT.Text.Json/dotnet.yml)](https://github.com/pairbit/IT.Text.Json/actions)
 [![GitHub Releases](https://img.shields.io/github/release/pairbit/IT.Text.Json.svg)](https://github.com/pairbit/IT.Text.Json/releases)
 
-EnumJsonConverterFactory, Base64JsonConverterFactory
+EnumJsonConverterFactory, Base64JsonConverterFactory, UnescapeInPlace

@@ -297,7 +297,7 @@ public class EnumJsonConverterTest
             Is.EqualTo("\"three\""));
 
         Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"two, five\""));
+            Is.EqualTo("\"one, two, four\""));
 
         //Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | (EnumByteFlags)8, jso),
         //    Is.EqualTo("\"first, second, eight\""));
@@ -333,7 +333,7 @@ public class EnumJsonConverterTest
             Is.EqualTo("\"three\""));
 
         Assert.That(JsonSerializer.Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"two, five\""));
+            Is.EqualTo("\"one, two, four\""));
 
         Assert.That(JsonSerializer.Deserialize<EnumByteFlags>("\"  one   ,    two, four\"", jso),
             Is.EqualTo((EnumByteFlags)7));
@@ -354,15 +354,6 @@ public class EnumJsonConverterTest
 
         Assert.That(Deserialize<EnumByteFlags>("\"one\"", jso), Is.EqualTo(EnumByteFlags.One));
         Assert.That(Deserialize<EnumByteFlags>("\"two\"", jso), Is.EqualTo(EnumByteFlags.Two));
-
-        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
-            Is.EqualTo("\"three\""));
-
-        Assert.That(Serialize(EnumByteFlags.Four | EnumByteFlags.One, jso),
-            Is.EqualTo("\"five\""));
-
-        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
-            Is.EqualTo("\"two, five\""));
 
         Assert.That(Deserialize<EnumByteFlags>("\"two, five\"", jso),
             Is.EqualTo((EnumByteFlags)7));
@@ -423,6 +414,46 @@ public class EnumJsonConverterTest
 
         Assert.That(Assert.Catch<TypeInitializationException>(() => new FlagsEnumJsonConverter<EnumOne, int>(JsonNamingPolicy.CamelCase))!.GetBaseException().Message,
             Is.EqualTo(ArgEnumMoreOne<EnumOne>().Message));
+    }
+
+    [Test]
+    public void StrictEnum_Flags_SerializeFromEnd_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new FlagsEnumJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase,
+            writeFromEnd: true));
+
+        Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
+        Assert.That(Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));
+
+        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
+            Is.EqualTo("\"three\""));
+
+        Assert.That(Serialize(EnumByteFlags.Four | EnumByteFlags.One, jso),
+            Is.EqualTo("\"five\""));
+
+        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"two, five\""));
+    }
+
+    [Test]
+    public void StrictEnum_Flags_SerializeFromStart_Test()
+    {
+        var jso = new JsonSerializerOptions();
+        jso.Converters.Add(new FlagsEnumJsonConverter<EnumByteFlags, byte>(JsonNamingPolicy.CamelCase,
+            writeFromEnd: false));
+
+        Assert.That(Serialize(EnumByteFlags.One, jso), Is.EqualTo("\"one\""));
+        Assert.That(Serialize(EnumByteFlags.Two, jso), Is.EqualTo("\"two\""));
+
+        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two, jso),
+            Is.EqualTo("\"three\""));
+
+        Assert.That(Serialize(EnumByteFlags.Four | EnumByteFlags.One, jso),
+            Is.EqualTo("\"five\""));
+
+        Assert.That(Serialize(EnumByteFlags.One | EnumByteFlags.Two | EnumByteFlags.Four, jso),
+            Is.EqualTo("\"one, two, four\""));
     }
 
     [Test]

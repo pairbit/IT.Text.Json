@@ -13,11 +13,12 @@ public class EnumJsonConverterFactory : JsonConverterFactory
     private readonly long _seed;
 #if NET7_0_OR_GREATER
     private readonly byte[]? _sep;
+    private readonly bool _writeFromEnd;
 #endif
 
     public EnumJsonConverterFactory(JsonNamingPolicy? namingPolicy, JavaScriptEncoder? encoder = null, long seed = 0
 #if NET7_0_OR_GREATER
-        , byte[]? sep = null
+        , byte[]? sep = null, bool writeFromEnd = true
 #endif
         )
     {
@@ -26,6 +27,7 @@ public class EnumJsonConverterFactory : JsonConverterFactory
         _seed = seed;
 #if NET7_0_OR_GREATER
         _sep = sep;
+        _writeFromEnd = writeFromEnd;
 #endif
     }
 
@@ -40,7 +42,7 @@ public class EnumJsonConverterFactory : JsonConverterFactory
 #if NET7_0_OR_GREATER
             return (JsonConverter?)Activator.CreateInstance(
                 typeof(FlagsEnumJsonConverter<,>).MakeGenericType(typeToConvert, typeToConvert.GetEnumUnderlyingType()),
-                _namingPolicy, _encoder, _seed, _sep);
+                _namingPolicy, _encoder, _seed, _sep, _writeFromEnd);
 #else
             throw new NotImplementedException("FlagsEnumJsonConverter is not implemented");
 #endif
