@@ -15,6 +15,15 @@ public static class xUtf8JsonReader
 {
     private const byte Pad = (byte)'=';
 
+    public static long GetValueStart(this ref Utf8JsonReader reader)
+        => reader.TokenStartIndex + reader.TokenType.GetOffset();
+
+    public static Range GetRange(this ref Utf8JsonReader reader)
+    {
+        var start = checked((int)reader.TokenStartIndex + reader.TokenType.GetOffset());
+        return new Range(start, start + reader.ValueSpan.Length);
+    }
+
     public static ReadOnlySequence<T?> GetRentedSequence<T>(this ref Utf8JsonReader reader,
         JsonConverter<T> itemConverter, JsonSerializerOptions options, long maxLength,
         int bufferSize = BufferSize.KB_64)
