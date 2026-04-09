@@ -11,6 +11,8 @@ public class RentedReadOnlyMemoryJsonConverter<T> : JsonConverter<ReadOnlyMemory
     private readonly JsonConverter<T> _itemConverter;
     private readonly int _maxLength;
 
+    public int MaxLength => _maxLength;
+
     public RentedReadOnlyMemoryJsonConverter(JsonSerializerOptions options, int maxLength)
     {
         if (options == null) throw new ArgumentNullException(nameof(options));

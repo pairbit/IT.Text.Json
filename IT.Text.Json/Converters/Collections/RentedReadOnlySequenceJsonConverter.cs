@@ -13,6 +13,10 @@ public class RentedReadOnlySequenceJsonConverter<T> : JsonConverter<ReadOnlySequ
     private readonly long _maxLength;
     private readonly int _bufferSize;
 
+    public long MaxLength => _maxLength;
+
+    public int BufferSize => _bufferSize;
+
     public RentedReadOnlySequenceJsonConverter(JsonSerializerOptions options, long maxLength, int bufferSize)
     {
         if (options == null) throw new ArgumentNullException(nameof(options));

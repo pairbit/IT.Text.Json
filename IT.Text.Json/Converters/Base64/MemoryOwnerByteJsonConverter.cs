@@ -11,6 +11,10 @@ public class MemoryOwnerByteJsonConverter : JsonConverter<IMemoryOwner<byte>?>
     private readonly int _maxEncodedLength;
     private readonly byte _rawToken;
 
+    public int MaxEncodedLength => _maxEncodedLength;
+
+    public byte RawToken => _rawToken;
+
     public MemoryOwnerByteJsonConverter(int maxEncodedLength, byte rawToken)
     {
         _maxEncodedLength = maxEncodedLength;

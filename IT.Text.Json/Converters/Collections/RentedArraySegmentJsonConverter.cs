@@ -12,6 +12,8 @@ public class RentedArraySegmentJsonConverter<T> : JsonConverter<ArraySegment<T>>
     private readonly JsonConverter<T> _itemConverter;
     private readonly int _maxLength;
 
+    public int MaxLength => _maxLength;
+
     public RentedArraySegmentJsonConverter(JsonSerializerOptions options, int maxLength)
     {
         if (options == null) throw new ArgumentNullException(nameof(options));

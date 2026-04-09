@@ -10,6 +10,10 @@ public class RentedArraySegmentByteJsonConverter : JsonConverter<ArraySegment<by
     private readonly int _maxEncodedLength;
     private readonly byte _rawToken;
 
+    public int MaxEncodedLength => _maxEncodedLength;
+
+    public byte RawToken => _rawToken;
+
     public RentedArraySegmentByteJsonConverter(int maxEncodedLength, byte rawToken)
     {
         _maxEncodedLength = maxEncodedLength;

@@ -40,6 +40,10 @@ public class EnumJsonConverter<TEnum> : JsonConverter<TEnum>
 #endif
         <TEnum, JsonEncodedText> _valueToUtf8Name;
 
+    public long Seed => _seed;
+
+    public int MaxNameLength => _maxNameLength;
+
     static EnumJsonConverter()
     {
 #if NET6_0_OR_GREATER

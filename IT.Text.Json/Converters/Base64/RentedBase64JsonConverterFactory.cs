@@ -9,6 +9,10 @@ public class RentedBase64JsonConverterFactoryAttribute : JsonConverterAttribute
     private readonly int _maxEncodedLength;
     private readonly byte _rawToken;
 
+    public int MaxEncodedLength => _maxEncodedLength;
+
+    public byte RawToken => _rawToken;
+
     public RentedBase64JsonConverterFactoryAttribute() :
         base(typeof(RentedBase64JsonConverterFactory))
     {
@@ -33,6 +37,10 @@ public class RentedBase64JsonConverterFactory : JsonConverterFactory
 {
     private readonly int _maxEncodedLength;
     private readonly byte _rawToken;
+
+    public int MaxEncodedLength => _maxEncodedLength;
+
+    public byte RawToken => _rawToken;
 
     public RentedBase64JsonConverterFactory(int maxEncodedLength, byte rawToken)
     {

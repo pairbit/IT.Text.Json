@@ -41,6 +41,14 @@ public class FlagsEnumJsonConverter<TEnum, TNumber> : EnumJsonConverter<TEnum>
     private readonly ConcurrentDictionary<TEnum, JsonEncodedText> _valuesToUtf8Name;
     private readonly bool _writeFromEnd;
 
+    public JsonEncodedText Sep => _sep;
+
+    public TNumber MaxNumber => _maxNumber;
+
+    public int MaxLength => _maxLength;
+
+    public bool IsWriteFromEnd => _writeFromEnd;
+
     static FlagsEnumJsonConverter()
     {
         if (typeof(TNumber) != typeof(TEnum).GetEnumUnderlyingType())

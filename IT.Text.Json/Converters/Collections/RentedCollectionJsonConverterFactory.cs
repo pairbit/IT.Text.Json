@@ -1,5 +1,4 @@
-﻿using IT.Buffers;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -11,12 +10,16 @@ public class RentedCollectionJsonConverterFactoryAttribute : JsonConverterAttrib
     private readonly long _maxLength;
     private readonly int _bufferSize;
 
+    public long MaxLength => _maxLength;
+
+    public int BufferSize => _bufferSize;
+
     public RentedCollectionJsonConverterFactoryAttribute() :
         base(typeof(RentedCollectionJsonConverterFactory))
     {
     }
 
-    public RentedCollectionJsonConverterFactoryAttribute(long maxLength, int bufferSize = BufferSize.KB_64)
+    public RentedCollectionJsonConverterFactoryAttribute(long maxLength, int bufferSize = Buffers.BufferSize.KB_64)
     {
         if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
         if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
@@ -39,12 +42,16 @@ public class RentedCollectionJsonConverterFactory : JsonConverterFactory
     private readonly long _maxLength;
     private readonly int _bufferSize;
 
+    public long MaxLength => _maxLength;
+
+    public int BufferSize => _bufferSize;
+
     public RentedCollectionJsonConverterFactory()
     {
         _maxLength = long.MaxValue;
     }
 
-    public RentedCollectionJsonConverterFactory(long maxLength, int bufferSize = BufferSize.KB_64)
+    public RentedCollectionJsonConverterFactory(long maxLength, int bufferSize = Buffers.BufferSize.KB_64)
     {
         if (maxLength < 0) throw new ArgumentOutOfRangeException(nameof(maxLength));
         if (bufferSize <= 0) throw new ArgumentOutOfRangeException(nameof(bufferSize));
